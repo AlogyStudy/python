@@ -2,6 +2,7 @@
 import pygame
 import time
 from pygame.locals import *
+import random
 
 screenW = 480 # window宽度
 screenH = 700 # window高度
@@ -84,7 +85,7 @@ class EnemyBullet(object):
   def display(self):
     self.screen.blit(self.image, (self.X, self.Y))
   def move(self):
-    self.Y -= self.speed
+    self.Y += self.speed
   # 小球是否越界
   def judge(self):
     if self.Y < self.W or self.X > screenW or self.X < 0:
@@ -104,7 +105,7 @@ class EnemyPlan(object):
     self.W = W
     self.H = H
     self.X = 0
-    self.Y = 0
+    self.Y = -Y
     self.screen = screen
     self.urlObj = pygame.image.load(url)
     self.bullet_list = []
@@ -127,7 +128,9 @@ class EnemyPlan(object):
         self.dir = 'right'
 
   def fire(self):
-    self.bullet_list.append(EnemyBullet('./feiji/bullet1.png', self.screen, self.X, self.Y, self.W, self.H))   
+    random_num = random.ranint(1, 100)
+    if random_num == 8 or random_num == 20:
+      self.bullet_list.append(EnemyBullet('./feiji/bullet1.png', self.screen, self.X, self.Y, self.W, self.H))
 
 def key_control(aircraft):
   # 获取事件(检测键盘)
