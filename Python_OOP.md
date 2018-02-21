@@ -353,4 +353,47 @@ A.set_num() # 调用静态方法
 a.set_num() # 实例调用静态方法
 ```
 
+> 私有化
 
+`xx`: 公有变量
+`_x`: 单前置下划线，私有化属性或方法，`from somemodule import *`禁止导入，类对象和子类可以访问
+`__xx`: 双前置下划线，避免与子类中的属性名命名冲突，无法在外部直接访问
+`__xx__`: 双前后下划线，命名空间的魔法对象或属性。`__init__`。(开发时，不要使用这种定义变量方式)
+`xx_`: 单后置下划线，用于避免与`Python`关键词的冲突
+
+
+> property
+
+作用：获取与设置自动调用方法
+
+类属性方式调用`property`：
+```
+class Money(object):
+    def __init(self):
+        pass
+    def getMoney(self):
+        pass
+    def setMoney(self, value):
+        pass
+    money = property(getMoney, setMoney) # key 为调用时候的key
+
+m = Money()
+m.money = 10
+```
+
+装饰器方式使用`property`：
+
+```
+class Money(object):
+    def __init__(self):
+        self.__num = 0
+    @property
+    def money(self): # 函数名和调用key对应 # 获取
+        return self.__money
+    @money.setter
+    def money(self, value): # 获取
+        self.__num = value
+
+m = Money()
+print(m.money)
+```
