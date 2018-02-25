@@ -94,7 +94,7 @@ string.replace("-", " ")
 ",".join(list)
 "hi {0}".format('j')
 str.find(",")
-str.index(",") 
+str.index(",")
 str.count(",")
 str.split(",")
 
@@ -114,6 +114,37 @@ len() # 求序列长度
 in # 判断元素是否在序列中
 max() # 返回最大值
 min() # 返回最小值
+```
+
+## Set
+
+
+集合`Set`于列表，元组类似，可以存储多个数据，但是，这些数据是不重复的。
+
+集合对象支持`union(联合)`, `intersection(交集)`, `difference(差集)`和`sysmmetric_difference(对称差集)`等数学运算
+
+```
+>>> x = set('abcd')
+>>> x
+{'c', 'a', 'b', 'd'}
+>>> type(x)
+<class 'set'>
+>>> y = set(['h','e','l','l','o'])
+>>> y
+{'h', 'e', 'o', 'l'}
+>>> z = set('spam')
+>>> z
+{'s', 'a', 'm', 'p'}
+>>> y&z # 交集
+set()
+>>> x&z # 交集
+{'a'}
+>>> x|y # 并集
+{'a', 'e', 'd', 'l', 'c', 'h', 'o', 'b'}
+>>> x-y # 差集
+{'c', 'a', 'b', 'd'}
+>>> x^z # 对称差集(在x或z中，但不会同时出现在二者中)
+{'m', 'd', 's', 'c', 'b', 'p'}
 ```
 
 ## Casting
@@ -158,10 +189,10 @@ expr.sub(...)
 
 ```
 def my_abs (x):
-    if x >= 0:
-        return x
-    else:
-        return -x    
+if x >= 0:
+return x
+else:
+return -x
 ```
 
 > 空函数
@@ -170,7 +201,7 @@ def my_abs (x):
 
 ```
 def nop ()
-    pass
+pass
 ```
 
 空函数的作用：提供占位符
