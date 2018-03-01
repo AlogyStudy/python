@@ -257,6 +257,60 @@ print('子进程已结束')
 
 主进程会等待所有的Process子进程先结束，然后再结束主进程。
 
+创建新的进程还能够使用类的方式，可以自定义一个类，继承Process类，每次实例化这个类的时候，就等同于实例化一个进程对象
+
+创建新的进程的另一种方式：`使用自定义类`，继承`Process`类，每次实例化当前自定义类的时候，等同与实例话一个进程对象。
+
+```
+from multiprocessing import Process
+import time
+
+class New_Process (Process):
+# 重写run方法
+def run():
+while True:
+print('11')
+time.sleep(1)
+
+p = New_Process()
+p.start() # 没有传递target参数，会调用run方法
+
+while True:
+print('main')
+time.sleep(1)
+```
+-----
+```
+from multiprocessing import Process
+import time
+import os
+
+# 继承Process
+class Process_Class (Process):
+# 因为Process类本身也有__init__方法，这个子类相当于重写了Process的__init__方法，导致，并没有完全的初始化一个Process类，所以不能子类不能使用继承的方法和属性。
+# 解决：将继承类的本身传递给Process.__init__方法，完成这些初始化操作。
+def __init__(self, interval):
+Process.__init__(self)
+self.interval = interval
+
+# 重写Process类的run()方法
+def run(self):
+print("子进程(%s) 开始执行，父进程为（%s）"%(os.getpid(),os.getppid()))
+t_start = time.time()
+time.sleep(self.interval)
+t_stop = time.time()
+print("(%s)执行结束，耗时%0.2f秒"%(os.getpid(),t_stop-t_start))
+
+if __name__ == '__main__':
+t_start = time.time()
+print("当前程序进程(%s)"%os.getpid())
+p1 = Process_Class(2) # 实例化
+# 对一个不包含target属性的Process类执行start()方法，就会运行这个类中的run()方法，所以这里会执行p1.run()
+p1.start()
+p1.join()
+t_stop = time.time()
+print("(%s)执行结束，耗时%0.2f"%(os.getpid(),t_stop-t_start))
+```
 
 > Process语法结构
 
@@ -351,5 +405,34 @@ worker_1,执行时间为'2.00'秒
 p1.is_alive=False
 ```
 
+> 进程池
+
+池`Pool`作用：缓冲
+进程池优点：增加使用率
+
+创建新的进程的另一种方式：`进程池Pool`
+
+创建一定数量的进程，然后需要使用的时候拿去使用，使用完毕后归还。
+
+```
+from multiprocessing import Pool
+import random
+import time
+
+def worker(num):
+for i in range(random.randint(1, 3)):
+print('pid = %d, num=%d'%(os.getpid(), num) )
+time.sleep(1)
+
+p = Pool(3)
+
+for in range(10):
+p.apply_async(worker,(i )) # 向进程池中添加任务
+# 如果添加的任务数超过了进程池中的进程个数的话，那么会导致添加不进入到进程池中。
+# 添加到进程池中的任务，如果还没有被执行的话，那么会等待进程池中的进程完成一个任务之后，会自动去使用已经结束的进程，完成没有被执行的任务。
+
+p.close() # 关闭进程池，关闭后p实例不再接收新的请求
+p.join() # 等待p实例中的所有子进程执行完毕，主进程才会退出， 必须放在close语句之后。
+```
 
 
