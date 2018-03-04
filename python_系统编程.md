@@ -224,7 +224,20 @@ while True:
 print('--mian')
 time.sleep(1)
 ```
-
+当前执行结果：
+```
+--mian
+--test
+--mian
+--test
+--mian
+--mian
+--test
+--mian
+--mian
+... # 循环
+```
+-----
 ```
 # coding=utf-8
 from multiprocessing import Process
@@ -232,7 +245,7 @@ import os
 
 # 子进程执行的代码
 def run_proc(name):
-print('子进程运行中，name= %s ,pid=%d...' % (name,  .getpid()))
+print('子进程运行中，name= %s ,pid=%d...' % (name,  os.getpid()))
 
 if __name__ == '__main__':
 print('父进程 %d.' % os.getpid())
@@ -245,9 +258,9 @@ print('子进程已结束')
 ```
 执行结果
 ```
-父进程 12826
+父进程 3045.
 子进程将要执行
-子进程运行中，name= test, pid=12827...
+子进程运行中，name= test ,pid=3046...
 子进程已结束
 ```
 
@@ -267,7 +280,8 @@ import time
 
 class New_Process (Process):
 # 重写run方法
-def run():
+def run(nPro): #run
+print(nPro) # t=<New_Process(New_Process-1, started)>
 while True:
 print('11')
 time.sleep(1)
@@ -392,14 +406,14 @@ print("p1.is_alive=%s"%p1.is_alive())
 ```
 执行结果：
 ```
-进程ID：19866
+进程ID：14889
 p2.is_alive=True
 p1.name=Process-1
-p1.pid=19867
+p1.pid=14890
 p2.name=alogy
-p2.pid=19868
-worker_1,父进程(19866),当前进程(19867)
-worker_2,父进程(19866),当前进程(19868)
+p2.pid=14891
+worker_1,父进程(14889),当前进程(14890)
+worker_2,父进程(14889),当前进程(14891)
 worker_2,执行时间为'1.00'秒
 worker_1,执行时间为'2.00'秒
 p1.is_alive=False
@@ -416,6 +430,7 @@ p1.is_alive=False
 
 ```
 from multiprocessing import Pool
+import os
 import random
 import time
 
@@ -426,7 +441,7 @@ time.sleep(1)
 
 p = Pool(3)
 
-for in range(10):
+for i in range(10):
 p.apply_async(worker,(i )) # 向进程池中添加任务
 # 如果添加的任务数超过了进程池中的进程个数的话，那么会导致添加不进入到进程池中。
 # 添加到进程池中的任务，如果还没有被执行的话，那么会等待进程池中的进程完成一个任务之后，会自动去使用已经结束的进程，完成没有被执行的任务。
@@ -434,5 +449,281 @@ p.apply_async(worker,(i )) # 向进程池中添加任务
 p.close() # 关闭进程池，关闭后p实例不再接收新的请求
 p.join() # 等待p实例中的所有子进程执行完毕，主进程才会退出， 必须放在close语句之后。
 ```
+
+> 多种方式的比较
+
+- `os.fork()`
+- `Process(target)`
+- `Pool`
+
+`os.fork()`:
+```
+ret = os.fork()
+if ret == 0:
+# 子进程
+else:
+# 父进程
+
+# 主进程会立马结束
+```
+
+`Process(target, args)`:
+```
+p1 = Process(atrget=fun)
+p1.start()
+p1.join() # 主进程会等待所有子进程都结束
+```
+
+`Pool()`
+```
+pool = Pool(3)
+pool.apply_asnyc(fun)
+pool.join() # 主进程在不join()的情况下，会立马结束，不会等待子进程结束之后再结束主进程。
+# 主进程一般都用来等待，任务在子进程中执行。（一般使用进程池）
+```
+
+> apply堵塞式添加任务
+
+阻塞式`apply()`创建多进程
+```
+from multiprocessing import Pool
+
+def worker():
+print(1)
+
+p = Pool(3)
+
+for i in range(5):
+p.apply(worker)
+
+p.close()
+p.join()
+```
+
+> 进程间通信-Queue
+
+`Queue`本身是一个消息列队程序
+
+- `Process`方式创建进程需要通过`Queue`创建通信
+- 进程池创建进程需要通过`Manager().Queue()`创建通信
+
+```
+
+#coding=utf-8
+from multiprocessing import Queue
+q = Queue(3) # 初始化一个Queue对象，最多可接收三条put消息
+q.put("消息1")
+q.put("消息2")
+print(q.full())  # False
+q.put("消息3")
+print(q.full()) # True
+
+# 因为消息列队已满下面的try都会抛出异常，第一个try会等待2秒后再抛出异常，第二个Try会立刻抛出异常
+try:
+q.put("消息4",True,2)
+except:
+print("消息列队已满，现有消息数量:%s"%q.qsize())
+
+try:
+q.put_nowait("消息4")
+except:
+print("消息列队已满，现有消息数量:%s"%q.qsize())
+
+
+# 先判断消息列队是否已满，再写入
+if not q.full():
+q.put_nowait("消息4")
+
+# 读取消息时，先判断消息列队是否为空，再读取
+if not q.empty():
+for i in range(q.qsize()):
+print(q.get_nowait())
+```
+
+`Queue()`语法：
+
+初始化`Queue()`对象时，(例如：`q = Queue()`)，若参数没有指定最大可接受消息的数量，或数量为负值，那么就代表可接受的消息数量没有上限(直到内存的尽头)
+
+`Queue.qsize()`: 返回当前队列包含的消息数量
+`Queue.empty()`: 如果队列为空，返回`True`，反之`False`
+`Queue.full()`: 如果队列满了，返回`True`，反之`False`
+`Queue.get_nowait()`: 相当于`Queue.get(False)`
+`Queue.put_nowait(item)`: 相当`Queue.put(item, False)`
+`Queue.get([block [, timeout]])`: 获取队列中的一条信息，然后将其队列中移除，`block`默认值为`True`
+- 如果`block`使用默认值，且没有设置`timeout`(单位秒)，消息队列如果为空，此时程序将被阻塞（停在读取状态)，直到从消息队列读到消息为止，如果设置了`timeout`，则会等待`timeout`秒，若没有读取到任何消息，则抛出`Queue.Empty`异常。
+- 如果`block`为`False`,消息队列为空，则会立刻抛出`Queue.Empty`异常
+`Queue.put(item, [block [, timeout]])`: 将`item`消息写入队列，`block`默认值为`True`
+- 如果`block`使用默认值，且没有设置`timeout`（单位秒），消息列队如果已经没有空间可写入，此时程序将被阻塞（停在写入状态），直到从消息列队腾出空间为止，如果设置了`timeout`，则会等待`timeout`秒，若还没空间，则抛出`Queue.Full`异常；
+- 如果`block`值为`False`，消息列队如果没有空间可写入，则会立刻抛出`Queue.Full`异常；
+
+> 多进程拷贝文件
+
+
+```
+#coding=utf-8
+from multiprocessing import Pool, Manager
+import os
+
+def copy_task (name, old_file, new_file, queue):
+print(old_file + '/' + name)
+fr = open(old_file + '/' + name)
+fw = open(new_file + '/' + name, 'w')
+
+con = fr.read()
+fw.write(con)
+
+fr.close()
+fw.close()
+
+queue.put(name)
+
+def main ():
+old_file = input('文件夹名字:')
+new_file = old_file + '_附件'
+os.mkdir(new_file)
+file_names = os.listdir(old_file)
+
+pool = Pool(5)
+queue = Manager().Queue()
+
+for file in file_names:
+pool.apply_async(copy_task, args=(file,  old_file, new_file, queue))
+
+num = 0
+all_num = len(file_names)
+while num < all_num:
+queue.get()
+num += 1
+copy_rate = num / all_num
+print('\rcopy进度是:%.2f%%'%(copy_rate * 100), end='')
+
+print('\n完成copy')
+
+if __name__ == '__main__':
+main()
+```
+
+## 线程
+
+> Thread创建多线程
+
+进程：程序运行起来，程序的资源(资源分配的代码)
+线程：进程中的一种，真正执行代码的东西(`CPU`调度的代码)
+
+```
+from threading import Thread
+import time
+
+def test():
+print('111')
+time.sleep(1)
+
+for i in range(5):
+t = Thread(target=test)
+t.start()
+```
+
+- 创建好的线程，需要调用`start()`方法来启动。
+- 主线程任务结束，不会理解结束，会等待所有子线程结束。
+
+> 使用Thread子类完成创建多线程
+
+`pid`: 进程号
+`tid`: 线程号
+
+`0`号进程：切换进程，处理`CPU`。（切换进程）
+`1`号进程：间接或直接生成其它进程。
+
+```
+from threading import Thread
+import time
+
+
+class My_Thread(Thread):
+def run (self):
+for i in range(3):
+time.sleep(1)
+print(self.name) # name 属性中保存的是当前线程的名字
+
+if __name__ == '__main__':
+t = My_Thread()
+t.start()
+```
+
+> 线程的执行顺序
+
+```
+#coding=utf-8
+import threading
+import time
+
+class MyThread(threading.Thread):
+def run(self):
+for i in range(3):
+time.sleep(1)
+msg = "I'm "+self.name+' @ '+str(i)
+print(msg)
+def test():
+for i in range(5):
+t = MyThread()
+t.start()
+if __name__ == '__main__':
+test()
+
+# 只能保证每个线程都运行完整个run函数，但是线程的启动顺序、
+# run函数中每次循环的执行顺序都不能确定。
+```
+
+多线程程序的执行顺序是**不确定**的。当执行到`sleep`语句时，线程将被阻塞`（Blocked）`，到`sleep`结束后，线程进入就绪`（Runnable）`状态，等待调度。而线程调度将自行选择一个线程执行。
+
+- 每个线程一定会有一个名字，尽管上面的例子中没有指定线程对象的`name`，但是`python`会自动为线程指定一个名字。
+- 当线程的`run()`方法结束时该线程完成。
+- 无法控制线程调度程序，但可以通过别的方式来影响线程调度的方式。
+- 线程的几种状态:
+
+
+![](./image/bV4Rdw.png)
+
+> 线程共享全局变量
+
+```
+
+from threading import Thread
+import time
+
+g_num = 100
+
+def work1():
+global g_num
+for i in range(3):
+g_num += 1
+
+print("----in work1, g_num is %d---"%g_num)
+
+
+def work2():
+global g_num
+print("----in work2, g_num is %d---"%g_num)
+
+
+print("---线程创建之前g_num is %d---"%g_num)
+
+t1 = Thread(target=work1)
+t1.start()
+
+time.sleep(1)
+
+t2 = Thread(target=work2)
+t2.start()
+```
+执行结果：
+```
+---线程创建之前g_num is 100---
+----in work1, g_num is 103---
+----in work2, g_num is 103---
+```
+
+- 在一个进程内的所有线程共享全局变量，能够在不适用其他方式的前提下完成多线程之间的数据共享。
+- 线程是对全局变量的随意更改，造成多线程之间的全局变量的混乱（及线程非安全）
 
 
