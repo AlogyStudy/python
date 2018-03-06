@@ -727,3 +727,107 @@ t2.start()
 - 线程是对全局变量的随意更改，造成多线程之间的全局变量的混乱（及线程非安全）
 
 
+全局变量共享的方式（修改）：
+- 变量前加`global`
+- 可变数据类型，例如`list`
+
+> 进程和线程的区别
+
+
+进程：能够完成多任务，比如：在一台电脑上能够同时运行多个`QQ`
+线程：能够完成多任务，比如：一个`QQ`中的多个聊天窗口
+
+定义的不同：
+
+- **进程是系统进行资源分配和调度的一个独立单位**
+- 线程是进程的一个实体，**是CPU调度和分派的基本单位**，它是比进程更小的能独立运行的基本单位。线程自己基本上不拥有系统资源，只拥有一点**在运行中必不可少的资源**(如程序计算器，一组寄存器和栈)，但是它可与同属一个进程的其他的线程共享进程所拥有的全部资源。
+
+区别：
+
+- 一个程序至少有一个进程,一个进程至少有一个线程.
+- 线程的划分尺度小于进程(资源比进程少)，使得多线程程序的并发性高。
+- 进程在执行过程中拥有独立的内存单元，而多个线程共享内存，从而极大地提高了程序的运行效率
+- 线线程不能够独立执行，必须依存在进程中
+
+优缺点：
+
+线程和进程在使用上各有优缺点：线程执行开销小，但不利于资源的管理和保护；而进程正相反。
+
+> 避免全局变量被修改的方式
+
+避免多线程多全局数据影响
+
+- 轮询
+- 互斥锁 (线程同步) **同步就是协同步调，按预定的先后次序进行运行**
+
+
+轮询:
+```
+from threading import Thread
+import time
+
+g_num = 0
+g_flag = 1
+
+def test1 ():
+global g_num
+global g_flag
+if g_flag == 1:
+for i in range(1000000):
+g_num += 1
+g_flag = 0
+print('--test--g_num=%d'%g_num)
+
+def test2 ():
+global g_num
+# 轮询
+while True:
+if g_flag != 1:
+for i in range(1000000):
+g_num += 1
+break
+print('--test2--g_num=%d'%g_num)
+
+p1 = Thread(target=test1)
+p1.start()
+p2 = Thread(target=test2)
+p2.start()
+```
+
+> 互斥锁
+
+```
+from threading import Thread, Lock
+import time
+
+
+g_num = 0
+
+def test1 ():
+global g_num
+mutex.acquire()
+for i in range(1000000):
+g_num += 1
+mutex.release()
+print('--test--g_num=%d'%g_num)
+
+def test2 ():
+global g_num
+# 轮询
+mutex.acquire()
+for i in range(1000000):
+g_num += 1
+mutex.release()
+print('--test2--g_num=%d'%g_num)
+
+mutex = Lock() # 互斥锁，默认是没有上锁到
+# 一方成功上锁，那么另一方会堵塞(一直等待)到这个锁被解开为止
+# 一个线程释放，其它线程都会执行
+
+p1 = Thread(target=test1)
+p1.start()
+
+p2 = Thread(target=test2)
+p2.start()
+```
+
