@@ -830,4 +830,73 @@ p1.start()
 p2 = Thread(target=test2)
 p2.start()
 ```
+-----
+```
+# 创建锁
+mutex = threading.Lock()
+# 锁定
+mutex.acquire([blocking])
+# 释放
+mutex.release()
+```
+锁的好处：
+- 确保了某段关键代码只能由一个线程从头到尾完整地执行
+锁的坏处:
+- 阻止了多线程并发执行，包含锁的某段代码实际上只能以单线程模式执行，效率就大大的下降
+- 由于可以存在多个锁，不同的线程持有不同的锁，并试图获取对方持有的锁，可能会造成死锁。
+
+> 多线程使用非共享变量
+
+仅仅是**读取值**，不用调用`global`
+设置值的时候，需要加互斥锁
+
+在多线程开发中，全局变量是多个线程都共享的数据，而局部变量等是各自线程的，是非共享的（线程中的局部变量，各自不能访问，各自不影响。）
+
+> 死锁
+
+在线程间共享多个资源的时候，如果两个线程分别占用一部分资源并且同时等待对方的资源，就会造成死锁。
+尽管死锁很少发生，但一旦发生就会造成应用的停止响应。
+
+死锁例子：
+```
+#coding=utf-8
+import threading
+import time
+
+class MyThread1(threading.Thread):
+def run(self):
+if mutexA.acquire():
+print(self.name+'----do1---up----')
+time.sleep(1)
+
+if mutexB.acquire():
+print(self.name+'----do1---down----')
+mutexB.release()
+mutexA.release()
+
+class MyThread2(threading.Thread):
+def run(self):
+if mutexB.acquire():
+print(self.name+'----do2---up----')
+time.sleep(1)
+if mutexA.acquire():
+print(self.name+'----do2---down----')
+mutexA.release()
+mutexB.release()
+
+mutexA = threading.Lock()
+mutexB = threading.Lock()
+
+if __name__ == '__main__':
+t1 = MyThread1()
+t2 = MyThread2()
+t1.start()
+t2.start()
+```
+
+**避免死锁**
+
+- 程序设计时要尽量避免（银行家算法）
+- 添加超时时间: `mutexB.acquire(timeout=2)`
+
 
