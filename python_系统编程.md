@@ -899,4 +899,135 @@ t2.start()
 - 程序设计时要尽量避免（银行家算法）
 - 添加超时时间: `mutexB.acquire(timeout=2)`
 
+> 多线程有序执行
+
+同步就是协调步调，按预定的先后次序进行运行
+
+阻塞，非阻塞：等下执行，还是不等立刻执行。
+同步，异步：多方协同执行，是一同执行，还是顺序执行。
+
+```
+from threading import Thread,Lock
+from time import sleep
+
+class Task1(Thread):
+def run(self):
+while True:
+if lock1.acquire():
+print("------Task 1 -----")
+sleep(0.5)
+lock2.release()
+
+class Task2(Thread):
+def run(self):
+while True:
+if lock2.acquire():
+print("------Task 2 -----")
+sleep(0.5)
+lock3.release()
+
+class Task3(Thread):
+def run(self):
+while True:
+if lock3.acquire():
+print("------Task 3 -----")
+sleep(0.5)
+lock1.release()
+
+# 使用Lock创建出的锁默认没有“锁上”
+lock1 = Lock()
+# 创建另外一把锁，并且“锁上”
+lock2 = Lock()
+lock2.acquire()
+# 创建另外一把锁，并且“锁上”
+lock3 = Lock()
+lock3.acquire()
+
+t1 = Task1()
+t2 = Task2()
+t3 = Task3()
+
+t1.start()
+t2.start()
+t3.start()
+```
+
+线程的同步：可以使用互斥锁完成多个任务，有序的进程工作。
+
+> Queue
+
+生产者与消费者模式来解决耦合的问题
+
+`Queue`：
+- 对于`Queue`，在多线程通信之间扮演重要的角色(解耦)
+- 添加数据到队列中，使用`put()`方法
+- 从队列中取数据，使用`get()`方法
+- 判断队列中是否还有数据，使用`qsize()`方法
+
+
+> ThreadLocal对象
+
+`ThreadLocal`对象在线程中的使用
+
+在多线程环境下，每个线程都有自己的数据。一个线程使用自己的局部变量比使用全局变量好，因为局部变量只有线程自己能看见，不会影响其他线程，而全局变量的修改必须加锁。
+
+既可以具有各自线程的单独变量，有可以互不影响方法：
+- 使用字典，定义全局变量。
+- `ThreadLocal`对象
+
+一个`ThreadLocal`变量虽然是全局变量，但每个线程都只能读写自己线程的独立副本，互不干扰。`ThreadLocal`解决了参数在一个线程中各个函数之间互相传递的问题
+
+```
+import threading
+
+
+local = threading.local()
+
+def process_student():
+std = local.student
+print('Hello, %s (in %s)'%(std, threading.current_thread().name))
+
+def process_thread(name):
+local.student = name
+process_student()
+
+t1 = threading.Thread(target=process_thread, args=('xixixi',), name='Thread-A')
+t2 = threading.Thread(target=process_thread, args=('hahaha',), name='Thread-B')
+
+t1.start()
+t2.start()
+t1.join()
+t1.join()
+```
+
+`ThreadLocal`最常用的地方就是为每个线程绑定一个**数据库连接**，**HTTP请求**，**用户身份信息**等，这样一个线程的所有调用到的处理函数都可以非常方便地访问这些资源。
+
+> 异步的实现
+
+```
+from multiprocessing import Pool
+import time
+import os
+
+def test():
+print("---进程池中的进程---pid=%d,ppid=%d--"%(os.getpid(),os.getppid()))
+for i in range(3):
+print("----%d---"%i)
+time.sleep(1)
+return "hhhh"
+
+def test2(args):
+print("---callback func--pid=%d"%os.getpid())
+print("---callback func--args=%s"%args)
+
+pool = Pool(3)
+pool.apply_async(func=test,callback=test2)
+
+time.sleep(5)
+
+print("----主进程-pid=%d----"%os.getpid())
+```
+`callback`主进程返回执行。
+子进程返回值到主进程中。
+主进程放下当前到任务，去执行其它任务，然后回到执行放下到任务。
 
