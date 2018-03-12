@@ -120,4 +120,245 @@ Note:
 `IP`地址范围：`127.0.0.1` - `127.255.255.255`用于回路测试
 
 
+## socket
+
+`socket套接字`作用：多台电脑间进程的通信
+
+```
+socket.socket(AddressFamily, Type)
+```
+`Address Family`: 可以选择`AF_INET`（用于Internet进程间通信）或者`AF_UNIX`（用于同一台机器进程间通信），一般使用`AF_INET`
+`Type`:套接字类型，可以是`SOCK_STREAM`（流式套接字，主要用于TCP协议）;也可以是`SOCK_DGRAM`(数据报套接字，主要用于UDP协议)
+
+`TCP`通信：
+```
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+```
+`UDP`通信：
+```
+import socket
+s = socket.socket(socket.AF_INIT, socket.SOCK_DGRAM)
+```
+
+`TCP`通信好处：不会丢失数据，数据可靠。
+`TCP`通信坏处：速度慢。
+
+> UDP
+
+`UDP`用户数据报协议，是一个无连接的简单的面向数据报的运输层协议。`UDP`不提供可靠性，它只把应用程序传递`IP`曾的数据报发出去，但是并不能保证数据达到目的地。
+由于`UDP`在传输数据报前不用在客户和服务端之间建立一个连接，且没有超时重发等机制，故而传输速度很快。
+
+`UDP`是一种面向无连接的协议，每个数据报都是一个独立的信息，包括完整的源地址或目的地址，它在网络上以任何可能的路径传往目的地，因此是否能达到目的地，到达目的地的地址以及内容的正确性都是不能保证的。
+
+
+`UDP`特点：
+
+- `UDP`是面向无连接的通讯协议，`UDP`数据报括目的端口号和源端口号信息，由于通讯不需要连接，所以可以实现广播发送。
+- `UDP`传输数据时有大小限制，每个被传输的数据报必须限定在64KB之内。
+- `UDP`是一个不可靠的协议，发送方所发送的数据报并不一定以相同的次序到达接收方。
+
+`UDP`一般用于**多点通信**和**实时的数据业务**:
+
+- 语音广播
+- 视频
+- QQ
+- TFTP(简单文件传送）
+- SNMP（简单网络管理协议）
+- RIP（路由信息协议，如报告股票市场，航空信息）
+- DNS(域名解释）
+
+> `UDP`发送数据
+
+1. 创建客户端套接字
+2. 发送/接收数据
+3. 关闭套接字
+
+```
+from socket import *
+
+
+udpSocekt = socket(AF_INET, SOCK_DGRAM)
+
+udpSocket.send(b'msg', '192.168.1.201', 8081)
+
+udpSocket.close()
+```
+
+> `UDP`发送、接收数据
+
+```
+# coding=utf-8
+
+from socket import *
+
+
+udpSocket = socket(AF_INET, SOCK_DGRAM)
+sendAddr = ('192.168.1.201', 8080)
+sendData = raw_input("请输入要发送的数据:")
+udpSocket.sendto(sendData, sendAddr)
+
+recvData = udpSocket.recvfrom(1024) # 1024表示本次接收的最大字节数
+
+print(recvData)
+
+# 关闭套接字
+udpSocket.close()
+```
+
+> 端口问题
+
+运行程序端口号会变化：
+每重新运行一次网络程序，端口不一样的原因：数字标识这个网络程序，当重新运行时，如果没有确定到底用哪个，系统默认会随机分配。
+这个网络程序在运行的过程中，这个就唯一标识这个程序，所以如果其它电脑上的网络程序如果想要向此程序发送数据，那么就需要向这个数字(即端口)标识的程序发送。
+
+在同一个OS中，端口不允许相同，即如果某个端口已经被使用了，那么在这个端口进程释放该端口之前，其它进程不能使用该端口。
+
+
+> 绑定信息
+
+一般情况下，一天电脑上运行的网络程序有很多，而各自用端口号很多情况下，为了不育其它的网络程序占用同一个端口好，往往在编程中，`udp`的端口号一般不绑定。
+
+`bind`作用：固定端口和`IP`
+
+socket接收信息:
+```
+# coding=utf-8
+
+from socket import *
+
+
+udpSocket = socket(AF_INET, SOCK_DGRAM)
+bindAddr = ('', 9001) # ip地址和端口号，ip一般不用写，表示本机的任何一个ip
+udpSocket.bind(bindAddr) # 绑定ip和端口号
+
+recvData = udpSocket.recvfrom(1024) # 1024表示本次接收的最大字节数
+
+udpSocket.close()
+```
+
+一个`udp`网络程序，可以不绑定，此时操作系统会随机进行分配一个端口，如果重新运行次程序端口可能会发生变化
+一个`udp`网络程序，也可以绑定信息（ip地址，端口号），如果绑定成功，那么操作系统用这个端口号来进行区别收到的网络数据是否是此进程的
+
+发送方不需要绑定信息，服务方（接收方）需要绑定信息。
+接收和发送，可以同时进行。
+
+网络通信中的工作方式：
+- 单工：只能往一个方向发送数据。例如（收音机）
+- 半双工：一方在传输，另一方无法进行其它操作，同一时刻，只能执行一方。例如（对讲机）
+- 全双工: 二个方向可以同时传输数据。例如（电话）
+
+网络套接字（UDP和TCP）是**全双工**,例如（下载的同时，可以同时上传）
+
+
+> Python3编码问题
+
+在`socket.sendto()`时`Python3`默认需要字节一样的对象。不能使用`str`类型传递。
+
+发送数据时的解决方法：
+```
+sendData = 'msg'
+# udpSocket.sendto(sendData.encode('utf-8'), (ip, prot))
+udpSocket.sendto(sendData.encode('gb2312'), (ip, prot))
+```
+接收数据时的解决方法：
+```
+recvData =udpSocket.recvfrom(1024)
+
+content, destInfo = recvData
+
+print('content is %s'%content.decode('gb2312')) # decode() 默认是utf-8
+```
+
+> UDP网络通信过程
+
+
+![clipboard.png](/img/bV5xib)
+
+> echo服务器
+
+echo(回显)服务器: 发送一条数据，返回一条数据。
+
+```
+# coding=utf-8
+
+from socket import *
+
+
+udpSocket = socket(AF_INET, SOCK_DGRAM)
+
+bindAddr = ('', 9001)
+udpSocket.bind(bindAddr)
+
+num = 1
+while True:
+recvData = udpSocket.recvfrom(1024)
+udpSocket.sendto(recvData[0], recvData[1]) # 将接收到的数据再发送给对方
+print('已经将接收到的第%d个数据返回给对方,内容为:%s'%(num, recvData[0]))
+num += 1
+
+udpSocket.close()
+```
+
+## tftp文件下载器
+
+`wireshark`流经电脑中的数据，都可以检测到。
+
+`cs架构`：`client`, `server`
+`bs架构`：`browser`, `server`
+
+> TFTP协议
+
+TFTP（Trivial File Transfer Protocol,简单文件传输协议）
+
+是`TCP/IP`协议族中的一个用来在客户端与服务器之间进行**简单文件传输**的协议
+
+
+特点：
+- 简单
+- 占用资源小
+- 适合传递小文件
+- 适合在局域网进行传递
+- 端口号为`69`
+- 基于`UDP`实现
+
+`TFTP`下载过程：
+
+`TFTP`服务器默认监听`69`号端口
+当客户端发送"下载"请求（即读请求）时，需要向服务器的`69`端口发送，服务器若批准此请求，则使用一个新的，临时的，端口进行数据传输。
+
+![clipboard.png](/img/bV5zVT)
+
+`TFTP`数据包的格式：
+
+![clipboard.png](/img/bV5z3H)
+
+确认包`ACK`都需要往随机端口发送数据.
+上传和下载往`69`端口发送数据.
+
+`TFTP`操作码：
+
+| 操作码 | 功能 |
+|: --- :|: --- :|
+|1  |读请求，即下载|
+|2    |写请求，即上传|
+|3    |表示数据包，即DATA|
+|4    |确认码，即ACK|
+|5    |错误|
+
+`pack`和`unpack`的使用:
+
+如何知道服务器发送完毕？
+标记数据发送完毕：规定当客户端接收到到数据小于`516`字节（2字节操作码 + 2个字节到序号 + 512字节数据）时，意味着服务器发送完毕。
+
+保证一个数字占用2个字节？
+使用`struct.pack()`
+```
+sendData = struct.pack("!H8sb5sb",1,"test.jpg",0,"octet",0) # !表示网络数据， H占2个字节，8S占8个字节，b占一个字节。
+```
+
+大端：在CPU中高位存储低位，CPU中低位存储高位
+小端：在CPU中低位存储低位，CPU中高位存储高位
+
+
 
