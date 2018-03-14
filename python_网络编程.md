@@ -28,9 +28,11 @@ TCP/IP协议(协议族)
 网际层也称为：网络层
 网络接口层也称为：链路层
 
+常用的：`TCP`(模型：电话), `UDP`(模型：写信), `ARP`, `IP`
+
 > 端口
 
-端口: 
+端口:
 - 操作系统为了**区分数据给哪个进程**，增加了一个标识**端口**。
 - 进出进程的通道
 
@@ -43,12 +45,12 @@ TCP/IP协议(协议族)
 
 端口分类：
 - 知名端口
-    知名端口是众所周知的端口号，范围从0到1023: `80`端口分配给`HTTP`服务。`21`端口分配给`FTP`服务。`22`端口分配给`SSH`服务
+知名端口是众所周知的端口号，范围从0到1023: `80`端口分配给`HTTP`服务。`21`端口分配给`FTP`服务。`22`端口分配给`SSH`服务
 - 动态端口
-    动态端口的范围是从1024到65535。
-    它一般不固定分配某种服务，而是动态分配。
-    动态分配是指当一个系统进程或应用程序进程需要网络通信时，它向主机申请一个端口，主机从可用的端口号中分配一个供它使用。
-    当这个进程关闭时，同时也就释放了所占用的端口号。
+动态端口的范围是从1024到65535。
+它一般不固定分配某种服务，而是动态分配。
+动态分配是指当一个系统进程或应用程序进程需要网络通信时，它向主机申请一个端口，主机从可用的端口号中分配一个供它使用。
+当这个进程关闭时，同时也就释放了所占用的端口号。
 
 查看端口: `netstat -an`
 
@@ -88,7 +90,7 @@ A类的可用网络有126个，每个网络能容纳1677214个主机
 
 地址范围：`192.0.1.1` - `233.255.255.254`
 二进制表示为：`11000000 00000000 00000001 00000001` - `11011111 11111111 11111110 11111110`
-C类网络可达2097152个，每个网络能容纳254个主机
+C类网络可达2097152个，每个网络能容纳254(2^8 - 2[0,255不能使用])个主机
 
 **D类地址**
 D类地址用于多点广播
@@ -119,6 +121,8 @@ Note:
 
 `IP`地址范围：`127.0.0.1` - `127.255.255.255`用于回路测试
 
+`192.168.1.0` => `192.168.1.00000000`: 网络号
+`192.168.1.255` => `192.168.1.11111111`: 广播号
 
 ## socket
 
@@ -300,6 +304,46 @@ num += 1
 udpSocket.close()
 ```
 
+> udp广播
+
+`TCP`没有广播，即广播只能在`UDP`中使用，`TCP`使用不了。
+
+信息发送到设备上(交换机)，该设备再处理信息到各个目的地。
+
+网络通信中的几种通讯模式:
+- 单播： 点对点传输。例如：QQ聊天信息中的个人聊天
+- 多播(组播)： 一对多。例如：QQ聊天中群的一个人对群员发送信息
+- 广播：一对所有。应用场景例如：QQ上下线
+
+在`UDP`中使用广播，前提需要允许当前套接字发送广播。
+```
+# 发送广播数据的套接字进行修改设置，否则不能发送广播数据
+udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1) # 设置套接字配置
+```
+固定广播`IP`：`192.168.1.255`或者是`<broadcast>`(尽量使用该方式)
+
+```
+#coding=utf-8
+
+
+import socket, sys
+
+dest = ('<broadcast>', 7788)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# 对这个需要发送广播数据的套接字进行修改设置，否则不能发送广播数据
+s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
+
+# 以广播的形式发送数据到本网络的所有电脑中
+s.sendto("Hi", dest)
+
+print "等待对方回复（按ctrl+c退出）"
+
+while True:
+(buf, address) = s.recvfrom(2048)
+print "Received from %s: %s" % (address, buf)
+```
+
+
 ## tftp文件下载器
 
 `wireshark`流经电脑中的数据，都可以检测到。
@@ -331,7 +375,8 @@ TFTP（Trivial File Transfer Protocol,简单文件传输协议）
 
 `TFTP`数据包的格式：
 
-![clipboard.png](/img/bV5z3H)
+![clipboard.png](/img/bV5Fl6)
+
 
 确认包`ACK`都需要往随机端口发送数据.
 上传和下载往`69`端口发送数据.
@@ -352,13 +397,180 @@ TFTP（Trivial File Transfer Protocol,简单文件传输协议）
 标记数据发送完毕：规定当客户端接收到到数据小于`516`字节（2字节操作码 + 2个字节到序号 + 512字节数据）时，意味着服务器发送完毕。
 
 保证一个数字占用2个字节？
-使用`struct.pack()`
+使用`struct.pack()`组包
+使用`struct.unpack()`解包
+
+组包：
 ```
 sendData = struct.pack("!H8sb5sb",1,"test.jpg",0,"octet",0) # !表示网络数据， H占2个字节，8S占8个字节，b占一个字节。
+```
+解包：
+```
+udpSocket = socket(AF_INET, SOCK_DGRAM)
+recvData = udpSocket.recvfrom(1024)
+cmdTuple = struct.unpack('!HH', recvData[:4]) # 返回值 元组, 第一个元素操作码，第二个元素块编号
 ```
 
 大端：在CPU中高位存储低位，CPU中低位存储高位
 小端：在CPU中低位存储低位，CPU中高位存储高位
+例如：`ox11`(高位) `ox22`(低位)
+大端存储为：`ox2211`, 小端存储为: `ox1122`
+
+```
+from socket import *
+import struct
+
+udpSocket = socket(AF_INET, SOCKDGRAM)
+
+# 发送请求数据
+senData = struct.pack('!H8sb5sb', 1, 'test.jpg', 0, 'octet',0)
+sendAddr = ('192.168.1.201', 8080)
+socket.sendTo(senData, senAddr)
+
+# 确认
+
+# 接收数据
+recvData = udpSocket.recvfrom(1024)
+cmdTuple = struct.unpack('!HH', recvData[:4])
+print(cmdTuple)
+```
+
+客户端：
+```
+#coding=utf-8
+from socket import *
+
+# 创建socket
+tcpClientSocket = socket(AF_INET, SOCK_STREAM)
+
+# 链接服务器
+serAddr = ('192.168.1.102', 7788)
+tcpClientSocket.connect(serAddr)
+
+while True:
+# 提示用户输入数据
+sendData = raw_input("send：")
+
+if len(sendData) > 0:
+tcpClientSocket.send(sendData)
+else:
+break
+
+# 接收对方发送过来的数据，最大接收1024个字节
+recvData = tcpClientSocket.recv(1024)
+print 'recv:',recvData
+
+# 关闭套接字
+tcpClientSocket.close()
+```
+服务端：
+```
+#coding=utf-8
+from socket import *
+
+# 创建socket
+tcpSerSocket = socket(AF_INET, SOCK_STREAM)
+
+# 绑定本地信息
+address = ('', 7788)
+tcpSerSocket.bind(address)
+
+# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接了
+tcpSerSocket.listen(5)
+
+while True:
+# 如果有新的客户端来链接服务器，那么就产生一个信心的套接字专门为这个客户端服务器
+# newSocket用来为这个客户端服务
+# tcpSerSocket就可以省下来专门等待其他新客户端的链接
+newSocket, clientAddr = tcpSerSocket.accept()
+
+while True:
+# 接收对方发送过来的数据，最大接收1024个字节
+recvData = newSocket.recv(1024)
+
+# 如果接收的数据的长度为0，则意味着客户端关闭了链接
+if len(recvData) > 0:
+print('recv:', recvData)
+else:
+break
+
+# 发送一些数据到客户端
+sendData = raw_input('send:')
+newSocket.send(sendData)
+
+# 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
+newSocket.close()
+
+# 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
+tcpSerSocket.close()
+```
 
 
+## TCP
+
+`UDP用户数据包协议`模型中，在通信开始之前，不需要建立相关的链接，值需要发送数据即可，类似生活中的`写信`
+`TCP传输控制协议`通信模型中，在通信开始之前，一定要先建立相关的链接，才能发送数据，类似生活中的`打电话`
+
+
+`TCP协议`特点：
+- 稳定
+- 慢 (相对于`udp`而言，要慢一些，但是几乎提现微乎其微)
+- `web`服务器
+
+`UDP`模型：
+
+![clipboard.png](/img/bV5M5f)
+
+`TCP`模型：
+
+![clipboard.png](/img/bV5Nju)
+
+`socket`创建出来的默认是**主动套接字**（套接字默认是给别人发送信息，而不是等待信息），`listen()`由主动变为被动。（转为被动套接字后，才可以收别人发送的数据）
+
+`TCP`服务端步骤：
+1. 买手机: `socket()`
+2. 绑定手机卡: `bind()`
+3. 设置手机响铃模式: `listen()`
+4. 等待别人打电话接听: `accept()`
+5. 交流说话：`recv()/send()`接收发送数据
+
+`TCP`客户端步骤：
+1. 买手机：`socket()`
+2. 拨打电话: `connect()`
+
+`newScoket, clientAddr = tcpSocket.accept()`: 返回值是新的套接字(新的客户端)和新客户端的地址与`ip`
+
+`newScoket`作用，去处理当前的请求业务，而主套接字`tcpSocket`，作为继续监听套接字。
+
+服务端：
+```
+#coding=utf-8
+from socket import *
+
+
+tcpSerSocket = socket(AF_INET, SOCK_STREAM)
+
+# 绑定本地信息
+address = ('', 7788)
+tcpSerSocket.bind(address)
+
+# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接
+tcpSerSocket.listen(5)
+
+# 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器，newSocket用来为这个客户端服务，tcpSerSocket就可以省下来专门等待其他新客户端的链接
+newSocket, clientAddr = tcpSerSocket.accept()
+
+# 接收对方发送过来的数据，最大接收1024个字节
+recvData = newSocket.recv(1024)
+print '接收到的数据为:',recvData
+
+# 发送一些数据到客户端
+newSocket.send("thank you !")
+
+# 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
+newSocket.close()
+
+# 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
+tcpSerSocket.close()
+```
 
