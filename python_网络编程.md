@@ -537,12 +537,13 @@ tcpSerSocket.close()
 `TCP`客户端步骤：
 1. 买手机：`socket()`
 2. 拨打电话: `connect()`
+3. 交流说话：`recv()/send()`接收发送数据
 
 `newScoket, clientAddr = tcpSocket.accept()`: 返回值是新的套接字(新的客户端)和新客户端的地址与`ip`
 
 `newScoket`作用，去处理当前的请求业务，而主套接字`tcpSocket`，作为继续监听套接字。
 
-服务端：
+`TCP`服务端：
 ```
 #coding=utf-8
 from socket import *
@@ -573,4 +574,118 @@ newSocket.close()
 # 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
 tcpSerSocket.close()
 ```
+
+`TCP`客户端：
+```
+#coding=utf-8
+from socket import *
+
+tcpClientSocket = socket(AF_INET, SOCK_STREAM)
+
+# 链接服务器
+serAddr = ('192.168.1.102', 7788)
+tcpClientSocket.connect(serAddr) # 链接服务器需要耗费时间
+
+sendData = input("请输入要发送的数据：")
+
+tcpClientSocket.send(sendData)
+
+# 接收对方发送过来的数据，最大接收1024个字节
+recvData = tcpClientSocket.recv(1024)
+print('接收到的数据为: ', recvData)
+
+# 关闭套接字
+tcpClientSocket.close()
+```
+
+Note:
+`TCP`客户端已经链接好了服务器，在以后的数据发送中，不需要填写对方的`ip`和`port`
+`UDP`在发送数据的时候，因为没有之前的链接，在每次发送的数据的时候，需要每次填写接收方的`ip`和`port`
+
+
+模拟QQ聊天：
+
+客户端：
+
+```
+from scoket import *
+
+
+cSocket = socket(AF_INET, SOCK_STREM)
+
+addr = ('192.168.1.201', 8180)
+cSocket.connect(addr)
+
+while True:
+sendData = input('data: ')
+
+if len(sendData) > 0:
+cSocket.send(sendData)
+else:
+break
+
+# 接收对方发送的数据，最大值1024个字节
+recvData = cSocket.recv(1024)
+
+print('return data: %s'%recvData)
+
+cSocket.close()
+```
+
+服务端：
+```
+#coding=utf-8
+from socket import *
+
+sSocket = socket(AF_INET, SOCK_STREM)
+
+adder = ('', 8180)
+sSocket.bind(adder)
+sSocket.listen(5)
+
+while True:
+newSocket, clientAddr = sSocket.accept()
+
+while True:
+recvData = newSocket.recv(1024)
+
+# 如果接收到客户端发送的数据为0，表示客户端已经下线
+if len(recvData) > 0:
+print('recv: ', recvData)
+else:
+break # 退出
+newSocket.close() # 关闭新的Socket
+
+
+sSocket.close()
+```
+客户端一般绑定`IP`, 服务器一般不写`IP`。
+
+## 网络通信过程
+
+
+> 通过集线器组网
+
+- `hub（集线器）`能够完成多个电脑的链接
+- 每个数据包的发送都是以广播的形式进行的，容易堵塞网络
+
+> 通过交换机组网
+
+网络掩码:
+`C`类默认掩码：`255.255.255.0`
+`B`类默认掩码：`255.255.0.0`
+`A`类默认掩码：`255.0.0.0`
+网络掩码必须和`IP`一齐出现，才有作用。
+
+网络掩码作用：网络掩码按位与`IP`地址 => 网络号
+
+网络号相同处于同一个网段，才可以通信。
+
+网络交换机介绍:
+网络交换机(又称“网络交换器”)，是一个扩大网络的器材，能为子网络提供更多的连接端口，以便连接更多的计算机，具有性能比高，高度灵活，相对简单，易于实现等特点。
+以太网技术已
+
+交换机的作用：
+- 转发过滤：当一个数据帧的目的地址在`MAC`地址表中有映射时，它被转发到连接目的节点的端口而不是所有端口(如该数据帧为广播帧则转发至所有端口)
+- 学习功能：以太网交换机了解每一端口相连设备的`MAC`地址，并将地址同相应的端口映射起来存放在交换机缓存中的`MAC`地址表中成为当今最重要的一种局域网组网技术，网络交换机也就成为了最普及的交换机。
 
