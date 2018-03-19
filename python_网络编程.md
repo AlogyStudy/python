@@ -854,6 +854,9 @@ Note:
 
 > tcp三次握手，四次挥手
 
+
+![clipboard.png](/img/bV6bPm)
+
 `sequeue num`序列号, `ack num`确认包 等值的变化：
 
 `SYN`: 标记的`TCP`整个包的作用，也就是请求。
@@ -868,12 +871,58 @@ Note:
 
 第二次请求格式，还一并携带的数据包，而后`client`会发送确认数据包,并且`client`会自动关闭套接字，告知服务器。
 
-`PSH + ACK`: 第二次携带数据包给事
+`PSH + ACK`: 第二次携带数据包格式
 `FIN + ACK`: 浏览器套接字关闭发送的包（服务端和客户端各自调用套接字的close都会发送一个包告知对方）
 
 ![clipboard.png](/img/bV562q)
 
 ![clipboard.png](/img/bV5605)
+
+三次握手作用：建立链接，保存信息。
+
+
+> TCP十种状态
+
+`netstat -n`: 显示协议统计信息和当前 TCP/IP 网络连接,。
+`-n`参数： 以数字形式显示地址和端口号
+
+只要客户端调用`close`,服务器的`recv`的数据长度为0，
+过一段时间客户端才会`close`，而服务器收到`TIME_WAIT`的包之后，就关闭`socket`。
+
+![clipboard.png](/img/bV6cp1)
+
+Note:
+
+- 当一端收到一个`FIN`，内核让`read`返回0来通知应用层另一端已经终止了向本端的数据传送
+- 发送`FIN`通常是应用层对`socket`进行关闭的结果
+
+> tcp的2MSL问题
+
+![clipboard.png](/img/bV6cxT)
+
+`TTL`: 一个数据包在网络上经过的路由器的最大值，经过路由器的个数。
+- 如果路由接收到的`TTL`值是0的话，不会转发当前数据包，会直接扔掉。
+- 每经过一个路由减1(从此路过，留下1)
+
+```
+UNIX 及类 UNIX 操作系统 ICMP 回显应答的 TTL 字段值为 255
+Compaq Tru64 5.0 ICMP 回显应答的 TTL 字段值为 64
+微软 Windows NT/2K操作系统 ICMP 回显应答的 TTL 字段值为 128
+微软 Windows 95 操作系统 ICMP 回显应答的 TTL 字段值为 32
+```
+
+`MSL`: 一个数据包在网络上存储的最长时间（1min-2min）。
+`2MSL`：2倍的存活最长时间（2min-4min）。
+
+当第一次关闭，客户端没有`ACK`的时候，过一段时间服务器会再次发送`FIN`，最终收到这个数据包之后，就关闭掉通信。
+那边先`close`(不管是`client`还是`server`)就会等待`2MSL`时间。在这个时间中，这个套接字不会被释放，然后重启服务器的时候，导致**绑定失败**。
+
+`2MSL`问题原因：当`TCP`的一端发起主动关闭，在发出最后一个`ACK`包后，即第3次握手完成后发送了第四次握手的`AC`K包后就进入了`TIME_WAIT`状态，必须在此状态上停留两倍的`MSL`时间，等待`2MSL`时间主要目的是怕最后一个`ACK`包对方没收到，那么对方在**超时后将重发第三次握手的`FIN`包**，主动关闭端接到重发的`FIN`包后可以再发一个`ACK`应答包。`TIME_WAI`T状态 时两端的端口不能使用，要等到2MSL时间结束才可继续使用。
+
+导致结果：当连接处于2MSL等待阶段时任何**迟到的报文段都将被丢弃**。
+
+解决方法：可以通过设置`SO_REUSEADDR`选项达到不必等待`2MSL`时间结束再使用此端口。
+
 
 > 长连接、短连接
 
@@ -884,4 +933,193 @@ Note:
 短链接：
 `TCP`三次握手，发送数据，四次握手关闭。重新`TCP`三次握手，发送数据，四次握手关闭。如此反复。例如：访问网页
 
+TCP长/短连接的优点和缺点:
+- 长连接可以省去较多的`TCP`建立和关闭的操作，减少浪费，节约时间。对于频繁请求资源的客户来说，较适用于长连接。
+- 短连接对于服务器来说管理较为简单，存在的连接都是有用的连接，不需要额外的控制手段。但如果客户请求频繁，将在`TCP`的建立和关闭操作上浪费时间和带宽。
+- `client`与`server`之间的连接如果一直不关闭的话，会存在一个问题，随着客户端连接越来越多，`server`早晚有扛不住的时候，这时候`server`端需要采取一些策略，如关闭一些长时间没有读写事件发生的连接，这样可以避免一些恶意连接导致`server`端服务受损；如果条件再允许就可以以客户端机器为颗粒度，限制每个客户端的最大长连接数，这样可以完全避免某个的客户端连累后端服务。
+
+
+`TCP`长/短连接的应用场景：
+- 长连接多用于操作频繁，点对点的通讯，而且连接数不能太多情况。每个`TCP`连接都需要三次握手，这需要时间，如果每个操作都是先连接，再操作的话那么处理速度会降低很多，所以每个操作完后都不断开，再次处理时直接发送数据包就OK了，不用建立`TCP`连接。例如：数据库的连接用长连接，如果用短连接频繁的通信会造成`socket`错误，而且频繁的`socket` 创建也是对资源的浪费。
+- 而像`WEB`网站的`http`服务一般都用短链接，因为长连接对于服务端来说会耗费一定的资源，而像`WEB`网站这么频繁的成千上万甚至上亿客户端的连接用短连接会更省一些资源，如果用长连接，而且同时有成千上万的用户，如果每个用户都占用一个连接的话，那可想而知吧。所以并发量大，但每个用户无需频繁操作情况下需用短连好。
+
+
+> listen的队列长度
+
+
+`listen`参数问题: 首次一次达到该设置参数数值，后面关闭之后，已连接队列扔出一个，才能继续进行，再从半连接队列到已连接队列中。
+
+```
+tcpSerSocket.listen(connNum)
+# connNum表示，半链接和已链接次数的总长度
+# 在Linux中不管写多少，都是系统会自己计算该值
+# Mac电脑系统上，用户写多少就是多少。
+```
+![clipboard.png](/img/bV6dJD)
+
+
+服务端：
+```
+
+#coding=utf-8
+from socket import *
+from time import sleep
+
+# 创建socket
+tcpSerSocket = socket(AF_INET, SOCK_STREAM)
+
+# 绑定本地信息
+address = ('', 7788)
+tcpSerSocket.bind(address)
+
+connNum = int(raw_input("请输入要最大的链接数:"))
+
+# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接了
+tcpSerSocket.listen(connNum)
+
+# 在这个期间，如果有20个客户端调用了connect链接服务器，那么这个服务器的Linux底层，会自动维护2个队列（半链接和已链接）
+# 其中，半链接和已链接的总数为linsten中的值，如果这个值是5,那么，意味着此时最多只有5个客户端能够链接成功，而剩下15则会堵塞在connect函数
+for i in range(10):
+print(i)
+sleep(1)
+
+while True:
+
+# 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器
+newSocket, clientAddr = tcpSerSocket.accept() # 如果服务器调用了accept，那么Linux底层中的那个半链接和已链接中的总数就减少了一个，因此，此时的15个因为connect堵塞的客户端又会在进行连接 来争抢1个刚空出来的空位。
+print clientAddr
+sleep(1)
+```
+客户端：
+```
+#coding=utf-8
+from socket import *
+
+connNum = raw_input("请输入要链接服务器的次数:")
+for i in range(int(connNum)):
+s = socket(AF_INET, SOCK_STREAM)
+s.connect(("192.168.1.102", 7788))
+print(i)
+```
+
+Note:
+
+- `listen`中的`black`表示已经建立链接和半链接的总数
+- 如果当前已建立链接数和半链接数以达到设定值，那么新客户端就不会`connect`成功，而是等待服务器
+
+> 手动配置ip
+
+设置IP和掩码:
+```
+ifconfig eth0 192.168.5.40 netmask 255.255.255.0
+```
+设置网关:
+```
+route add default gw 192.168.5.1
+```
+
+> 常见网络攻击
+
+
+**tcp半链接攻击**
+
+`tcp`半链接攻击（`SYN Flood (SYN洪水)`）：是种典型的`DoS` (`Denial of Service，拒绝服务`) 攻击
+
+导致结果：服务器`TCP`连接资源耗尽，停止响应正常的`TCP`连接请求。
+
+三次链接的第一次就是半链接
+
+
+**dns攻击**
+
+`dns`使用的是`udp`协议，不稳定.
+
+`dns`服务器被劫持:
+需要攻击`dns`服务器，或者和`dns`服务器合作。
+一个域名服务器对其区域内的用户解析请求负责，但是并没有一个机制去监督它有没有认真地负责。 有些被攻击`dns`服务器故意更改一些域名的解析结果，将用户引导向一个错误的目标地址。
+用来阻止用户反问某些特定的网站，后者是将用户引导到广告页面，或者构造钓鱼网站，获取用户信息。
+
+`dns`欺骗：
+主动用一个假的`dns`应答来欺骗用户计算机，让其相信这个假的地址，并且抛弃真正的`dns`应答。
+
+导致用户访问假的目的地址。
+
+
+**查看域名解析的ip地址方法**
+
+```
+nslookup 域名
+
+# 例如
+nslookup baidu.com
+
+```
+
+![clipboard.png](/img/bV6fbl)
+
+
+**arp攻击**
+
+修改电脑的`mac`地址，使用中间人攻击。
+
+![clipboard.png](/img/bV6fbI)
+
+> NAT
+
+`NAT`: 网络地址转换器
+
+家庭上网:
+电话线 -> 调制解调器（猫） -> 路由器 -> 电脑,手机
+
+从`调制解调器`中出来的`IP`才可以访问到外网。
+
+
+`LAN`口: 局域网
+`WAN`口: 万维网
+
+![clipboard.png](/img/bV6fmj)
+
+路由器存在一张表，一个本地电脑和路由器对应到标识。
+
+路由器功能：`代理`
+本地电脑不能访问，路由器把不能访问的地址扔掉。
+
+
+## 并发服务器
+
+> 单进程服务器
+
+```
+from socket import *
+
+serSocket = socket(AF_INET, SOCK_STREAM)
+
+# 重复使用绑定的信息
+serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+# 作用：服务器先四次挥手到第一次，最终也等待2MSL时间。 服务器先结束，而且立即运行服务器，就不会出现
+
+localAddr = ('', 7788)
+
+serSocket.bind(localAddr)
+
+serSocket.listen(5)
+
+while True:
+print('主进程，等待新客户端的到来')
+newSocket, destAddr = serSocket.accept()
+print('主进程，接下来负责数据处理[%s]'%str(destAddr))
+
+try:
+while True:
+recvData = newSocket.recv(1024)
+if len(recvData) > 0:
+print('recv[%s]:%s'%(str(destAddr), recvData))
+else:
+print('[%s]客户端已经关闭'%str(destAddr))
+break
+finally:
+newSocket.close() # 服务器主动关闭
+
+serSocket.close()
+```
 
