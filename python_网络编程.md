@@ -1097,7 +1097,7 @@ from socket import *
 serSocket = socket(AF_INET, SOCK_STREAM)
 
 # 重复使用绑定的信息
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 # 作用：服务器先四次挥手到第一次，最终也等待2MSL时间。 服务器先结束，而且立即运行服务器，就不会出现
 
 localAddr = ('', 7788)
@@ -1133,5 +1133,408 @@ serSocket.close()
 已连接套接字关闭，意味着：当前套接字不能再使用`send`和`recv`来收发数据。
 
 
+`COW写时拷贝`：到该需要时才去拷贝，不然都是引用，能共有才去共用。
 
+多进程服务器:
+
+```
+from socket import *
+from multiprocessing import *
+from time import sleep
+
+# 处理客户端的请求并为其服务
+def dealWithClient(newSocket,destAddr):
+while True:
+recvData = newSocket.recv(1024)
+if len(recvData)>0:
+print('recv[%s]:%s'%(str(destAddr), recvData))
+else:
+print('[%s]客户端已经关闭'%str(destAddr))
+break
+
+newSocket.close()
+
+
+def main():
+
+serSocket = socket(AF_INET, SOCK_STREAM)
+serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+localAddr = ('', 7788)
+serSocket.bind(localAddr)
+serSocket.listen(5)
+
+try:
+while True:
+print('主进程，等待新客户端的到来')
+newSocket,destAddr = serSocket.accept()
+
+print('主进程，接下来创建一个新的进程负责数据处理[%s]'%str(destAddr))
+client = Process(target=dealWithClient, args=(newSocket,destAddr))
+client.start()
+
+# 因为已经向子进程中copy了一份（引用），并且父进程中这个套接字也没有用处了
+# 所以关闭
+newSocket.close()
+finally:
+# 当为所有的客户端服务完之后再进行关闭，表示不再接收新的客户端的链接
+serSocket.close()
+
+if __name__ == '__main__':
+main()
+```
+
+- 通过为每个客户端创建一个进程的方式，能够同时为多个客户端进行服务
+- 当客户端不是特别多的时候，这种创建进程方式还可以，如果有几百上千，就不可取了，因为每次创建进程等过程需要较大的资源。
+
+多线程服务器:
+```
+#encode=utf-8
+from socket import *
+from multiprocessing import *
+from time import sleep
+
+
+# 客户端的请求并为其服务
+
+def dealWithClient ():
+while True:
+recv_data = new_socket.recv(1024)
+if len(recv_data) > 0:
+print('recv[%s]:%s'%(str(destAddr), recvData))
+else:
+print('[%s]客户端已经关闭'%str(destAddr))
+break
+new_socket.close()
+
+
+def main ():
+ser_socket = socket(AF_INET, SOCK_STREAM)
+ser_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+local_addr = ('', 7788)
+ser_socket.bind(local_addr)
+ser_socket.listen(5)
+
+try:
+while True:
+print('等待客户端')
+new_socket, dest_addr = ser_socket.accpet()
+
+print('父进程[%s]'%str(dest_addr))
+client = Thread(target=deal_width_client, args=(new_socket, dest_addr))
+client.start()
+finally:
+ser_socket.close()
+
+if __name__ == '__main__':
+main()
+```
+
+> 单进程服务器-非堵塞模式
+
+
+```
+#coding=utf-8
+from socket import *
+import time
+
+# 用来存储所有的新链接的socket
+g_socketList = []
+
+def main():
+serSocket = socket(AF_INET, SOCK_STREAM)
+serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+localAddr = ('', 7788)
+serSocket.bind(localAddr)
+# 可以适当修改listen中的值来看看不同的现象
+serSocket.listen(1000)
+# 将套接字设置为非堵塞
+# 设置为非堵塞后，如果accept时，恰巧没有客户端connect，那么accept会
+# 产生一个异常，所以需要try来进行处理
+serSocket.setblocking(False)
+
+while True:
+
+try:
+newClientInfo = serSocket.accept()
+except Exception as result:
+pass
+else:
+print("一个新的客户端到来:%s"%str(newClientInfo))
+newClientInfo[0].setblocking(False)
+g_socketList.append(newClientInfo)
+
+# 用来存储需要删除的客户端信息
+needDelClientInfoList = []
+
+for clientSocket,clientAddr in g_socketList:
+try:
+recvData = clientSocket.recv(1024)
+if len(recvData)>0:
+print('recv[%s]:%s'%(str(clientAddr), recvData))
+else:
+print('[%s]客户端已经关闭'%str(clientAddr))
+clientSocket.close()
+g_needDelClientInfoList.append((clientSocket,clientAddr))
+except Exception as result:
+pass
+
+for needDelClientInfo in needDelClientInfoList:
+g_socketList.remove(needDelClientInfo)
+
+if __name__ == '__main__':
+main()
+```
+
+> select版服务器
+
+`select`作用: 完成`IO`的多路复用。能够完成对一些套接字的检测（所有的套接字 ）。
+
+多路复用：在没有开辟多进程，多线程的情况下， 能够完成并发服务器的开发。
+
+
+```
+readable, writeable, exceptionsal = select.select(inputs, [], [])
+```
+`select`参数：
+第一个列表：检测当前列表是否可以收数据。
+第二个列表：检测当前列表是否可以发数据。
+第三个列表：检测当前列表是否产生了异常。
+
+
+```
+#eoding=utf-8
+import select
+import sys
+import socket
+
+
+running = True
+
+def main ():
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('', 7788))
+server.listen(5)
+
+inputs = [server]
+
+while True:
+readable, writeable, exceptionsal = select.select(inputs, [], [])
+
+for sock in readable:
+if sock == server:
+client, addr = server.accept()
+inputs.append(client)
+
+# 监听用户输入的键盘
+elif sock == sys.stdin:
+cmd = sys.stdin.readline()
+running = False
+break
+
+else:
+data = sock.recv(1024)
+if data:
+sock.send(data)
+else:
+inputs.remove(data)
+sock.close()
+
+if not running:
+break
+
+server.close()
+
+if __name__ == '__main__':
+main()
+```
+
+优点：
+`select`目前几乎在所有的平台上支持，其良好跨平台支持也是它的一个优点。
+
+缺点:
+
+- `select`的一个缺点在于单个进程能够监视的文件描述符的数量存在最大限制，在Linux上一般为1024，可以通过修改宏定义甚至重新编译内核的方式提升这一限制，但是这样也会造成效率的降低。
+- 一般来说这个数目和系统内存关系很大，具体数目可以`cat /proc/sys/fs/file-max`查看。32位机默认是1024个。64位机默认是2048.
+- 对`socket`进行扫描时是依次扫描的，即采用轮询的方法，效率较低。
+- 当套接字比较多的时候，每次`select()`都要通过遍历`FD_SETSIZE`个`Socket`来完成调度，不管哪个`Socket`是活跃的，都遍历一遍。这会浪费很多CPU时间。
+
+
+> epoll版服务器
+
+`select`: 轮询，大小限制
+`poll`: 轮询
+`epoll`: 使用事件通知机制
+
+
+![clipboard.png](/img/bV6I7d)
+
+
+文件描述符：`fileno()`, 就是数字，文件创建的时候对应的生成唯一数字。
+```
+sys.stdout # 标准输出（屏幕）
+sys.stdin # 标准输入（键盘）
+sys.stderr # 标准错误（屏幕）
+```
+
+`epoll`的优点：
+- 没有最大并发连接的限制，能打开的`FD`(指的是文件描述符，通俗的理解就是套接字对应的数字编号)的上限远大于1024
+- 效率提升，不是轮询的方式，不会随着`FD`数目的增加效率下降。只有活跃可用的`FD`才会调用`callback`函数；即`epoll`最大的优点就在于它只管你“活跃”的连接，而跟连接总数无关，因此在实际的网络环境中，`epoll`的效率就会远远高于`select`和`poll`。
+
+
+```
+#coding=utf-8
+import socket
+import select
+
+def main():
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('', 1005))
+s.listen()
+
+epoll = select.epoll()
+
+# 注册事件到epoll中
+# epoll.register(fd[, eventmask])
+# 如果fd已经注册过，则会发生异常
+# 将创建的套接字添加到epoll的事件监听中
+epoll.register(s.fileno(), select.EPOLLIN|select.EPOLLET)
+
+connections = {}
+addresses = {}
+
+while True:
+# epoll 进行 fd 扫描的地方 -- 未指定超时时间则为阻塞等待
+epoll_list = epoll.poll()
+
+# 对事件进行判断
+for fd, events in epoll_list:
+if fd === s.lineno(): # 确定当前那个套接字被激活
+client, addr = s.accept()
+print('new client %s'%str(addr))
+
+# 将addr和套接字添加到字典中, fd作为当前字典的key
+connections[client.fileno()] = client
+addresses[client.fileno()] = addr
+
+# 向 epoll中注册 连接的socket的可读事件
+epoll.register(client.fileno(), select.EPOLLIN|select.EPOLLET)
+elif events == select.EPOLLIN: # 判断事件是否是可接收数据的事件
+recvdata = connections[fd].recv(1024)
+
+if len(recvdata) > 0:
+print('recv: %s'%recvdata)
+else:
+# 移除注册
+epoll.unregister()
+# 关闭套接字
+connections[fd].close()
+
+print('%s---offline---'%str(addresses[fd]))
+
+if __name__ == '__main__':
+main()
+```
+
+参数说明(特殊标识的数字)：
+- `EPOLLIN` （可读）
+- `EPOLLOUT` （可写）
+- `EPOLLET` （ET模式）
+
+`ET`模式区别：
+- `LT(level trigger)`和`ET(edge trigger)`，`LT`模式是默认模式。
+- `LT`模式：当`epoll`检测到描述符事件发生并将此事件通知应用程序，应用程序可以不立即处理该事件。下次调用`epoll`时，会再次响应应用程序并通知并通知此事件。(边缘触发, 多次通知)
+- `ET`模式：当`epoll`检测到描述符事件发生并将此事件通知应用程序，应用程序必须立即处理该事件。如果不处理，下次调用`epoll`时，不会再次响应应用程序并通知此事件。（平行触发，只通知一次）
+
+
+## 协程
+
+协程（微线程）：在一个线程中把任务分成N份，底层是通过生成器实现。
+
+计算密集型: 需要占用大量CPU （使用多进程）
+`IO`密集型: 时间花在等待上（使用多线程和协程）
+
+
+协程其实可以认为是比线程更小的执行单元。
+为什么是执行单元：自带`CPU`上下文，这样只要在何时的时机，可以把一个协程切换到另一个协程。 只要这个过程中保存或恢复`CPU`上下文，那么程序还是可以运行到。
+
+
+协程的问题:
+系统并不感知，所以操作系统不会帮你做切换。 那么谁来帮你做切换？让需要执行的协程更多的获得`CPU`时间。
+
+协程的简单实现：
+```
+import time
+
+def A():
+while True:
+print("----A---")
+yield
+time.sleep(0.5)
+
+def B(c):
+while True:
+print("----B---")
+next(c)
+time.sleep(0.5)
+
+if __name__=='__main__':
+a = A()
+B(a)
+```
+
+> greenlet实现多任务
+
+`greenlet模块`作用: 使用协程来完成多任务的切换。
+
+```
+#coding=utf-8
+
+from greenlet import greenlet
+import time
+
+def test1():
+while True:
+print('---A---')
+gr2.switch()
+time.sleep(0.5)
+
+def test2():
+while True:
+print('---B---')
+gr1.switch()
+time.sleep(0.5)
+
+gr1 = greenlet(test1)
+gr2 = greenlet(test2)
+
+# 切换到gr1中运行
+gr1.switch()
+```
+
+> gevent版服务器
+
+`greenlet`缺点：需要开发者自己切换。
+
+`gevent`: 能够自动切换任务模块
+
+原理：当一个`greenlet`遇到IO(指的是`input output` 输入输出，比如网络、文件操作等)操作时，比如访问网络，就自动切换到其它到`greenlet`,等到IO操作完成，再在适当到时候切换回来继续执行。
+由于IO操作非常耗时，经常使程序处于等待状态，有了`gevent`为其自动切换协程，就保证总有`greenlet`在运行，而不是等待IO
+
+```
+import gevent
+
+def f(n):
+for i in range(n):
+print gevent.getcurrent(), i
+# 用来模拟一个耗时操作，注意不是time模块中的sleep
+gevent.sleep(1)
+
+g1 = gevent.spawn(f, 5)
+g2 = gevent.spawn(f, 5)
+g3 = gevent.spawn(f, 5)
+g1.join()
+g2.join()
+g3.join()
+```
 
