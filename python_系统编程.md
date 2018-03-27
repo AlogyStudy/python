@@ -1,1293 +1,1054 @@
-## 网络
+多任务：同一个时间段中，执行多个函数/运行多个程序.
 
-> 网络通信
+操作系统可以同时运行多个任务:
+操作系统轮流让各个任务交替执行，任务1执行0.01秒，切换到任务2，任务2执行0.01秒，再切换到任务3，执行0.01秒……这样反复执行下去。表面上看，每个任务都是交替执行的，但是，由于CPU的执行速度实在是太快了，感觉就像所有任务都在同时执行一样。(时间片轮转)
 
-网络: 一种辅助双方或者多方能够连接在一起的工具
+任务 执行算法：
+- 时间片轮转
+- 优先级调度
+- 调度算法（什么样的情况下按照什么样的规则，让哪个任务执行）
 
-网络的目的：就是为了联通多方然后进行通信，即把数据从一方传递给另外一方。
+真正的并行执行多任务只能在多核CPU上实现，但是，由于任务数量远远多于CPU的核心数量，所以，操作系统也会自动把很多任务轮流调度到每个核心上执行。
 
+- 进程
+- 线程
+- 协程
 
-使用网络能够把多方链接在一起，然后可以进行数据传递
-网络编程： 让在不同的电脑上的软件能够进行数据传递，即**进程之间的通信**
+并发：看上去一齐执行（任务数>内核数）
+并行：真正一齐执行（内核数>任务数）
 
-> TCP/IP协议
+程序：编写完毕的代码，在没有运行的时候（一个可执行的代码，可以理解称没有生命）
+进程：正在运行的代码（除了包含代码外，还需要运行环境，占用的内存，键盘，显示器等，可以理解称具有生命）
 
-TCP/IP协议(协议族)
+## 进程
 
-为了把全世界的所有不同类型的计算机都连接起来，就必须规定一套全球通用的协议。
-互联网协议簇(`Internet Protocol Suite`)就是通用协议标准。
+> 创建子进程
 
-因为互联网协议包含了上百种协议标准，但是最重要的两个协议是`TCP`和`IP`协议，所以把互联网协议简称为：`TCP/IP协议`
-
-
-四层分类：`链路层` -> `网络层` -> `传输层` -> `应用层`
-七层分类：`物理层` -> `数据链路层` -> `网络层` -> `传输层` -> `会话层` -> `表示层` -> `应用层`
-
-![clipboard.png](/img/bV5luN)
-
-网际层也称为：网络层
-网络接口层也称为：链路层
-
-常用的：`TCP`(模型：电话), `UDP`(模型：写信), `ARP`, `IP`
-
-> 端口
-
-端口: 
-- 操作系统为了**区分数据给哪个进程**，增加了一个标识**端口**。
-- 进出进程的通道
-
-`Pid`与`端口`: 同一台操作系统中，`pid`一定不同，而且可知，但是多台操作系统中，`Pid`不一定能够唯一, 不能够知道其它操作系统的进程的`pid`；而端口在多台操作系统中是唯一的。
-
-端口作用：为了区分多个操作系统下具体是哪个进程。
-
-
-端口号： 端口是通过端口号来标记的，端口号只有整数，范围是从**0到65535**(在`Linux`系统中，端口可以有**65536（2的16次方）**个。)
-
-端口分类：
-- 知名端口
-知名端口是众所周知的端口号，范围从0到1023: `80`端口分配给`HTTP`服务。`21`端口分配给`FTP`服务。`22`端口分配给`SSH`服务
-- 动态端口
-动态端口的范围是从1024到65535。
-它一般不固定分配某种服务，而是动态分配。
-动态分配是指当一个系统进程或应用程序进程需要网络通信时，它向主机申请一个端口，主机从可用的端口号中分配一个供它使用。
-当这个进程关闭时，同时也就释放了所占用的端口号。
-
-查看端口: `netstat -an`
-
-> IP地址
-
-地址: 用来标记地点的
-
-`IP`地址的作用: 用来在网络中标记一台电脑的一串数字，比如`192.168.1.1`，在本地局域网上是唯一的。
-
-`IP`地址的分类：`A类`， `B类`， `C类`， `D类`， `E类`。
-
-每一个`IP`地址包括两部分：**网络地址**和**主机地址**
-
-
-![clipboard.png](/img/bV5nsH)
-
-
-**A类IP地址**
-第一个字节不变（网络号不变），其它字节可以变化（主机号可变）。
-一个A类`IP`地址：1字节的网络地址 + 3字节主机地址组成, 网络地址的最高位必须是“0”
-
-地址范围：`1.0.0.1` - `126.255.255.254`
-二进制表示为：`00000001 00000000 00000000 00000001` - `01111110 11111111 11111111 11111110`
-A类的可用网络有126个，每个网络能容纳1677214个主机
-
-**B类IP地址**
-第一个字节和第二个字节不变（网络号不变），其它字节可以变化（主机号可变）。
-一个B类`IP`地址：2个字节的网络地址 + 2个字节的主机地址组成，网络地址的最高位必须是“10”
-
-地址范围：`128.1.0.1` - `191.255.255.254`
-二进制表示为：`10000000 00000001 00000000 00000001` - `10111111 11111111 11111111 11111110`
-可用的B类网络有16384个，每个网络能容纳65534主机
-
-**C类IP地址**
-第一个字节和第二个字节不变,第三个字节（网络号不变），其它字节可以变化（主机号可变）
-一个C类`IP`地址：3个字节的网络地址 + 1个字节的主机地址组成，网络地址最高为必须是“110”
-
-地址范围：`192.0.1.1` - `233.255.255.254`
-二进制表示为：`11000000 00000000 00000001 00000001` - `11011111 11111111 11111110 11111110`
-C类网络可达2097152个，每个网络能容纳254(2^8 - 2[0,255不能使用])个主机
-
-**D类地址**
-D类地址用于多点广播
-
-D类`IP`地址第一个字节以`1110`开始，它是一个专门保留的地址。
-它并不指向特定的网络，目前这一类地址被用在多点广播（Multicast）中
-多点广播地址用来一次寻址一组计算机
-
-地址范围：`224.0.0.1` - `239.255.255.254`
-
-**E类IP地址**
-以`1111`开始，为将来使用保留
-E类地址保留，仅作实验和开发用
-
-
-**私有IP**
-
-国际规定有一部分`IP`地址是在局域网中使用，属于私网`IP`，不在公网中使用
+`os.fork()`创建新的进程，为子进程
 
 ```
-10.0.0.0 - 10.255.255.255
-172.16.0.0 - 172.31.255.255
-192.168.0.0 - 192.168.255.255
-```
-
-Note:
-相同网段:`192.168.1`前面3个字节相同就称之相同网段,即网络号不变就是相同网段
-
-`IP`地址范围：`127.0.0.1` - `127.255.255.255`用于回路测试
-
-`192.168.1.0` => `192.168.1.00000000`: 网络号
-`192.168.1.255` => `192.168.1.11111111`: 广播号
-
-## socket
-
-`socket套接字`作用：多台电脑间进程的通信
-
-```
-socket.socket(AddressFamily, Type)
-```
-`Address Family`: 可以选择`AF_INET`（用于Internet进程间通信）或者`AF_UNIX`（用于同一台机器进程间通信），一般使用`AF_INET`
-`Type`:套接字类型，可以是`SOCK_STREAM`（流式套接字，主要用于TCP协议）;也可以是`SOCK_DGRAM`(数据报套接字，主要用于UDP协议)
-
-`TCP`通信：
-```
-import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-```
-`UDP`通信：
-```
-import socket
-s = socket.socket(socket.AF_INIT, socket.SOCK_DGRAM)
-```
-
-`TCP`通信好处：不会丢失数据，数据可靠。
-`TCP`通信坏处：速度慢。
-
-> UDP
-
-`UDP`用户数据报协议，是一个无连接的简单的面向数据报的运输层协议。`UDP`不提供可靠性，它只把应用程序传递`IP`曾的数据报发出去，但是并不能保证数据达到目的地。
-由于`UDP`在传输数据报前不用在客户和服务端之间建立一个连接，且没有超时重发等机制，故而传输速度很快。
-
-`UDP`是一种面向无连接的协议，每个数据报都是一个独立的信息，包括完整的源地址或目的地址，它在网络上以任何可能的路径传往目的地，因此是否能达到目的地，到达目的地的地址以及内容的正确性都是不能保证的。
-
-
-`UDP`特点：
-
-- `UDP`是面向无连接的通讯协议，`UDP`数据报括目的端口号和源端口号信息，由于通讯不需要连接，所以可以实现广播发送。
-- `UDP`传输数据时有大小限制，每个被传输的数据报必须限定在64KB之内。 
-- `UDP`是一个不可靠的协议，发送方所发送的数据报并不一定以相同的次序到达接收方。
-
-`UDP`一般用于**多点通信**和**实时的数据业务**:
-
-- 语音广播
-- 视频
-- QQ
-- TFTP(简单文件传送）
-- SNMP（简单网络管理协议）
-- RIP（路由信息协议，如报告股票市场，航空信息）
-- DNS(域名解释）
-
-> `UDP`发送数据
-
-1. 创建客户端套接字
-2. 发送/接收数据
-3. 关闭套接字
-
-```
-from socket import *
-
-
-udpSocekt = socket(AF_INET, SOCK_DGRAM)
-
-udpSocket.send(b'msg', '192.168.1.201', 8081)
-
-udpSocket.close()
-```
-
-> `UDP`发送、接收数据
-
-```
-# coding=utf-8
-
-from socket import *
-
-
-udpSocket = socket(AF_INET, SOCK_DGRAM)
-sendAddr = ('192.168.1.201', 8080)
-sendData = input("请输入要发送的数据:")
-udpSocket.sendto(sendData, sendAddr)
-
-recvData = udpSocket.recvfrom(1024) # 1024表示本次接收的最大字节数
-
-print(recvData)
-
-# 关闭套接字
-udpSocket.close()
-```
-
-> 端口问题
-
-运行程序端口号会变化：
-每重新运行一次网络程序，端口不一样的原因：数字标识这个网络程序，当重新运行时，如果没有确定到底用哪个，系统默认会随机分配。
-这个网络程序在运行的过程中，这个就唯一标识这个程序，所以如果其它电脑上的网络程序如果想要向此程序发送数据，那么就需要向这个数字(即端口)标识的程序发送。
-
-在同一个OS中，端口不允许相同，即如果某个端口已经被使用了，那么在这个端口进程释放该端口之前，其它进程不能使用该端口。
-
-
-> 绑定信息
-
-一般情况下，一天电脑上运行的网络程序有很多，而各自用端口号很多情况下，为了不育其它的网络程序占用同一个端口好，往往在编程中，`udp`的端口号一般不绑定。
-
-`bind`作用：固定端口和`IP`
-
-socket接收信息:
-```
-# coding=utf-8
-
-from socket import *
-
-
-udpSocket = socket(AF_INET, SOCK_DGRAM)
-bindAddr = ('', 9001) # ip地址和端口号，ip一般不用写，表示本机的任何一个ip
-udpSocket.bind(bindAddr) # 绑定ip和端口号
-
-recvData = udpSocket.recvfrom(1024) # 1024表示本次接收的最大字节数
-
-udpSocket.close()
-```
-
-一个`udp`网络程序，可以不绑定，此时操作系统会随机进行分配一个端口，如果重新运行次程序端口可能会发生变化
-一个`udp`网络程序，也可以绑定信息（ip地址，端口号），如果绑定成功，那么操作系统用这个端口号来进行区别收到的网络数据是否是此进程的
-
-发送方不需要绑定信息，服务方（接收方）需要绑定信息。
-接收和发送，可以同时进行。
-
-网络通信中的工作方式：
-- 单工：只能往一个方向发送数据。例如（收音机）
-- 半双工：一方在传输，另一方无法进行其它操作，同一时刻，只能执行一方。例如（对讲机）
-- 全双工: 二个方向可以同时传输数据。例如（电话）
-
-网络套接字（UDP和TCP）是**全双工**,例如（下载的同时，可以同时上传）
-
-
-> Python3编码问题
-
-在`socket.sendto()`时`Python3`默认需要字节一样的对象。不能使用`str`类型传递。
-
-发送数据时的解决方法：
-```
-sendData = 'msg'
-# udpSocket.sendto(sendData.encode('utf-8'), (ip, prot))
-udpSocket.sendto(sendData.encode('gb2312'), (ip, prot))
-```
-接收数据时的解决方法：
-```
-recvData =udpSocket.recvfrom(1024)
-
-content, destInfo = recvData
-
-print('content is %s'%content.decode('gb2312')) # decode() 默认是utf-8
-```
-
-> UDP网络通信过程
-
-
-![clipboard.png](/img/bV5xib)
-
-> echo服务器
-
-echo(回显)服务器: 发送一条数据，返回一条数据。
-
-```
-# coding=utf-8
-
-from socket import *
-
-
-udpSocket = socket(AF_INET, SOCK_DGRAM)
-
-bindAddr = ('', 9001)
-udpSocket.bind(bindAddr)
-
-num = 1
-while True:
-recvData = udpSocket.recvfrom(1024)
-udpSocket.sendto(recvData[0], recvData[1]) # 将接收到的数据再发送给对方
-print('已经将接收到的第%d个数据返回给对方,内容为:%s'%(num, recvData[0]))
-num += 1
-
-udpSocket.close()
-```
-
-> udp广播
-
-`TCP`没有广播，即广播只能在`UDP`中使用，`TCP`使用不了。
-
-信息发送到设备上(交换机)，该设备再处理信息到各个目的地。
-
-网络通信中的几种通讯模式:
-- 单播： 点对点传输。例如：QQ聊天信息中的个人聊天
-- 多播(组播)： 一对多。例如：QQ聊天中群的一个人对群员发送信息
-- 广播：一对所有。应用场景例如：QQ上下线
-
-在`UDP`中使用广播，前提需要允许当前套接字发送广播。
-```
-# 发送广播数据的套接字进行修改设置，否则不能发送广播数据
-udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1) # 设置套接字配置
-```
-固定广播`IP`：`192.168.1.255`或者是`<broadcast>`(尽量使用该方式)
-
-```
-#coding=utf-8
-
-
-import socket, sys
-
-dest = ('<broadcast>', 7788)
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# 对这个需要发送广播数据的套接字进行修改设置，否则不能发送广播数据
-s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
-
-# 以广播的形式发送数据到本网络的所有电脑中
-s.sendto("Hi", dest)
-
-print "等待对方回复（按ctrl+c退出）"
-
-while True:
-(buf, address) = s.recvfrom(2048)
-print "Received from %s: %s" % (address, buf)
-```
-
-
-## tftp文件下载器
-
-`wireshark`流经电脑中的数据，都可以检测到。
-
-`cs架构`：`client`, `server`
-`bs架构`：`browser`, `server`
-
-> TFTP协议
-
-TFTP（Trivial File Transfer Protocol,简单文件传输协议）
-
-是`TCP/IP`协议族中的一个用来在客户端与服务器之间进行**简单文件传输**的协议
-
-
-特点：
-- 简单
-- 占用资源小
-- 适合传递小文件
-- 适合在局域网进行传递
-- 端口号为`69`
-- 基于`UDP`实现
-
-`TFTP`下载过程：
-
-`TFTP`服务器默认监听`69`号端口
-当客户端发送"下载"请求（即读请求）时，需要向服务器的`69`端口发送，服务器若批准此请求，则使用一个新的，临时的，端口进行数据传输。
-
-![clipboard.png](/img/bV5zVT)
-
-`TFTP`数据包的格式：
-
-![clipboard.png](/img/bV5Fl6)
-
-
-确认包`ACK`都需要往随机端口发送数据.
-上传和下载往`69`端口发送数据.
-
-`TFTP`操作码：
-
-| 操作码 | 功能 |
-|: --- :|: --- :|
-|1  |读请求，即下载|
-|2    |写请求，即上传|
-|3    |表示数据包，即DATA|
-|4    |确认码，即ACK|
-|5    |错误|
-
-`pack`和`unpack`的使用:
-
-如何知道服务器发送完毕？
-标记数据发送完毕：规定当客户端接收到到数据小于`516`字节（2字节操作码 + 2个字节到序号 + 512字节数据）时，意味着服务器发送完毕。
-
-保证一个数字占用2个字节？
-使用`struct.pack()`组包
-使用`struct.unpack()`解包
-
-组包：
-```
-sendData = struct.pack("!H8sb5sb",1,"test.jpg",0,"octet",0) # !表示网络数据， H占2个字节，8S占8个字节，b占一个字节。
-```
-解包：
-```
-udpSocket = socket(AF_INET, SOCK_DGRAM)
-recvData = udpSocket.recvfrom(1024)
-cmdTuple = struct.unpack('!HH', recvData[:4]) # 返回值 元组, 第一个元素操作码，第二个元素块编号
-```
-
-大端：在CPU中高位存储低位，CPU中低位存储高位
-小端：在CPU中低位存储低位，CPU中高位存储高位
-例如：`ox11`(高位) `ox22`(低位)
-大端存储为：`ox2211`, 小端存储为: `ox1122`
-
-```
-from socket import *
-import struct
-
-udpSocket = socket(AF_INET, SOCKDGRAM)
-
-# 发送请求数据
-senData = struct.pack('!H8sb5sb', 1, 'test.jpg', 0, 'octet',0)
-sendAddr = ('192.168.1.201', 8080)
-socket.sendTo(senData, senAddr)
-
-# 确认
-
-# 接收数据
-recvData = udpSocket.recvfrom(1024)
-cmdTuple = struct.unpack('!HH', recvData[:4])
-print(cmdTuple)
-``` 
-
-客户端：
-```
-#coding=utf-8
-from socket import *
-
-# 创建socket
-tcpClientSocket = socket(AF_INET, SOCK_STREAM)
-
-# 链接服务器
-serAddr = ('192.168.1.102', 7788)
-tcpClientSocket.connect(serAddr)
-
-while True:
-# 提示用户输入数据
-sendData = input("send：")
-
-if len(sendData) > 0:
-tcpClientSocket.send(sendData)
-else:
-break
-
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = tcpClientSocket.recv(1024)
-print 'recv:',recvData
-
-# 关闭套接字
-tcpClientSocket.close()
-```
-服务端：
-```
-#coding=utf-8
-from socket import *
-
-# 创建socket
-tcpSerSocket = socket(AF_INET, SOCK_STREAM)
-
-# 绑定本地信息
-address = ('', 7788)
-tcpSerSocket.bind(address)
-
-# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接了
-tcpSerSocket.listen(5)
-
-while True:
-# 如果有新的客户端来链接服务器，那么就产生一个信心的套接字专门为这个客户端服务器
-# newSocket用来为这个客户端服务
-# tcpSerSocket就可以省下来专门等待其他新客户端的链接
-newSocket, clientAddr = tcpSerSocket.accept()
-
-while True:
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = newSocket.recv(1024)
-
-# 如果接收的数据的长度为0，则意味着客户端关闭了链接
-if len(recvData) > 0:
-print('recv:', recvData)
-else:
-break
-
-# 发送一些数据到客户端
-sendData = input('send:')
-newSocket.send(sendData)
-
-# 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
-newSocket.close()
-
-# 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
-tcpSerSocket.close()
-```
-
-
-## TCP
-
-`UDP用户数据包协议`模型中，在通信开始之前，不需要建立相关的链接，值需要发送数据即可，类似生活中的`写信`
-`TCP传输控制协议`通信模型中，在通信开始之前，一定要先建立相关的链接，才能发送数据，类似生活中的`打电话`
-
-
-`TCP协议`特点：
-- 稳定
-- 慢 (相对于`udp`而言，要慢一些，但是几乎提现微乎其微)
-- `web`服务器
-
-`UDP`模型：
-
-![clipboard.png](/img/bV5M5f)
-
-`TCP`模型：
-
-![clipboard.png](/img/bV5Nju)
-
-`socket`创建出来的默认是**主动套接字**（套接字默认是给别人发送信息，而不是等待信息），`listen()`由主动变为被动。（转为被动套接字后，才可以收别人发送的数据）
-
-`TCP`服务端步骤：
-1. 买手机: `socket()`
-2. 绑定手机卡: `bind()`
-3. 设置手机响铃模式: `listen()`
-4. 等待别人打电话接听: `accept()`
-5. 交流说话：`recv()/send()`接收发送数据
-
-`TCP`客户端步骤：
-1. 买手机：`socket()`
-2. 拨打电话: `connect()`
-3. 交流说话：`recv()/send()`接收发送数据
-
-`newScoket, clientAddr = tcpSocket.accept()`: 返回值是新的套接字(新的客户端)和新客户端的地址与`ip`
-
-`newScoket`作用，去处理当前的请求业务，而主套接字`tcpSocket`，作为继续监听套接字。
-
-`TCP`服务端：
-```
-#coding=utf-8
-from socket import *
-
-
-tcpSerSocket = socket(AF_INET, SOCK_STREAM)
-
-# 绑定本地信息
-address = ('', 7788)
-tcpSerSocket.bind(address)
-
-# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接
-tcpSerSocket.listen(5)
-
-# 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器，newSocket用来为这个客户端服务，tcpSerSocket就可以省下来专门等待其他新客户端的链接
-newSocket, clientAddr = tcpSerSocket.accept()
-
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = newSocket.recv(1024)
-print '接收到的数据为:',recvData
-
-# 发送一些数据到客户端
-newSocket.send("thank you !")
-
-# 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
-newSocket.close()
-
-# 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
-tcpSerSocket.close()
-```
-
-`TCP`客户端：
-```
-#coding=utf-8
-from socket import *
-
-tcpClientSocket = socket(AF_INET, SOCK_STREAM)
-
-# 链接服务器
-serAddr = ('192.168.1.102', 7788)
-tcpClientSocket.connect(serAddr) # 链接服务器需要耗费时间
-
-sendData = input("请输入要发送的数据：")
-
-tcpClientSocket.send(sendData)
-
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = tcpClientSocket.recv(1024)
-print('接收到的数据为: ', recvData)
-
-# 关闭套接字
-tcpClientSocket.close()
-```
-
-Note:
-`TCP`客户端已经链接好了服务器，在以后的数据发送中，不需要填写对方的`ip`和`port`
-`UDP`在发送数据的时候，因为没有之前的链接，在每次发送的数据的时候，需要每次填写接收方的`ip`和`port`
-
-
-模拟QQ聊天： 
-
-客户端：
-
-```
-from scoket import *
-
-
-cSocket = socket(AF_INET, SOCK_STREM)
-
-addr = ('192.168.1.201', 8180)
-cSocket.connect(addr)
-
-while True:
-sendData = input('data: ')
-
-if len(sendData) > 0:
-cSocket.send(sendData)
-else:
-break
-
-# 接收对方发送的数据，最大值1024个字节
-recvData = cSocket.recv(1024)
-
-print('return data: %s'%recvData)
-
-cSocket.close()
-```
-
-服务端：
-```
-#coding=utf-8
-from socket import *
-
-sSocket = socket(AF_INET, SOCK_STREM)
-
-adder = ('', 8180)
-sSocket.bind(adder)
-sSocket.listen(5)
-
-while True:
-newSocket, clientAddr = sSocket.accept()
-
-while True:
-recvData = newSocket.recv(1024)
-
-# 如果接收到客户端发送的数据为0，表示客户端已经下线
-if len(recvData) > 0: 
-print('recv: ', recvData)
-else:
-break # 退出
-newSocket.close() # 关闭新的Socket
-
-
-sSocket.close()
-```
-客户端一般绑定`IP`, 服务器一般不写`IP`。
-
-## 网络通信过程
-
-名词：
-```
-Routers: 路由器
-Switches：交换机
-Hubs：集线器
-Wireless Devices： 无线设备
-Connections：连接器
-End Devices：终端设备
-```
-
-辅助软件: `Cisco Packet Tracer`
-
-> 通过集线器组网
-
-- `hub（集线器）`作用： 能够**完成多个电脑的链接**
-- 每个数据包的发送都是以**广播的形式**进行的，容易堵塞网络(任何数据，每次都是以广播形式发送)
-
-不允许一条网线之间有三台或以上的电脑一起链接，会导致数据混乱。需要使用`hub（集线器）`，交换机等设备解决。
-
-网络掩码:
-`C`类默认掩码：`255.255.255.0`
-`B`类默认掩码：`255.255.0.0`
-`A`类默认掩码：`255.0.0.0`
-网络掩码必须和`IP`一齐出现，才有作用。
-
-网络掩码作用：网络掩码按位与`IP`地址 => 网络号
-
-网络号相同处于同一个网段，才可以通信。 
-
-> 通过交换机组网
-
-网络交换机介绍:
-网络交换机(又称“网络交换器”)，是一个扩大网络的器材，能为子网络提供更多的连接端口，以便连接更多的计算机，具有性能比高，高度灵活，相对简单，易于实现等特点。
-以太网技术已
-
-交换机的作用：
-- 转发过滤：当一个数据帧的目的地址在`MAC`地址表中有映射时，它被转发到连接目的节点的端口而不是所有端口(如该数据帧为广播帧则转发至所有端口)
-- 学习功能：以太网交换机了解每一端口相连设备的`MAC`地址，并将地址同相应的端口映射起来存放在交换机缓存中的`MAC`地址表中成为当今最重要的一种局域网组网技术，网络交换机也就成为了最普及的交换机。
-
-Note：
-
-- 如果PC不知目标IP所对应的的MAC，那么可以看出，pc会先发送arp广播，得到对方的MAC然后，在进行数据的传送
-- 当switch第一次收到arp广播数据，会把arp广播数据包转发给所有端口（除来源端口）；如果以后还有pc询问此IP的MAC，那么只是向目标的端口进行转发数据
-
-> 交换机和集线器区别
-
-交换机和集线器相同点：
-- 完成多台电脑的链接
-
-交换机和集线器不同点：
-- 交换机第一次以广播形式确认具体当前是哪台电脑（学习功能），后面都是点对点的发送数据包（转发过滤功能）。（学习之后都是以单播形式传输数据包）
-- 集线器不管是第一次还是以后多次，还是对方电脑返回数据包，都是以广播形式发送。（容易造成网络拥堵）
-
-
-> arp和icmp
-
-网卡有一组序列号：
-实际地址/硬件地址/`MAC`地址: 6组数据，每一组数据都是十六进制表示。一共有六个字节。
-六个字节分为，前三组（厂商地址），后三组（该厂商生产的网卡序列号）。
-
-![clipboard.png](/img/bV53wM)
-
-
-`ping 192.168.1.1`使用的是`ICMP`协议
-获取`MAC`地址号使用的是`ARP`协议
-
-`ping`之前并不知道对方的`MAC`地址，需要先使用`ARP`协议，然后使用`ICMP`协议。
-
-
-![clipboard.png](/img/bV53xR)
-
-`OSI Model` 对应七层分类。
-
-七层分类：`物理层` -> `数据链路层` -> `网络层` -> `传输层` -> `会话层` -> `表示层` -> `应用层`
-
-
-`ICMP`协议作用：`ping `命令使用
-`ARP`协议作用：获取`MAC`地址（广播），根据`IP`寻找`MAC`地址
-`RARP`协议作用: 根据`MAC`地址寻找`IP`
-
-广播的`MAC`地址: `FFFF.FFFF.FFFF`, `TYPE`：`0x806`
-
-![clipboard.png](/img/bV53DE)
-
-`arp -a`命令：每台`pc`都会有一个`arp`缓存表，用来记录`IP`所对应的的`MAC`。`
-`arp -d`命令：删除`arp`缓存表
-
-
-> 路由器的作用以及组网
-
-路由器，确定一条路径的设备。（假想成十字路口的路标）
-
-功能：
-- 链接不同的网络，不同网段之间通信。
-- 判断网络地址
-- 选择`IP`路径
-
-路由器特点：
-- 至少有两个网卡（一个网卡具有一个`IP`地址）
-- 两个网卡都是在一个设备上
-
-
-Note:
-- 不在同一网段的pc，需要设置默认网关才能把数据传送过去 通常情况下，都会把路由器默认网关
-- 当路由器收到一个其它网段的数据包时，会根据“路由表”来决定，把此数据包发送到哪个端口；路由表的设定有静态和动态方法
-- 每经过一次路由器，那么`TTL值`就会减一
-
-路由解析协议：`RIP`
-
-
-> 网络通信过程的mac地址以及ip的不同
-
-有了`IP`为何需要`MAC`地址：
-获取默认网关的`MAC`地址（`rap协议`）
-
-
-`MAC`地址以及`IP`的不同：
-- `MAC`地址，在两个设备之间通信时，在实时变化。
-- `IP`地址，在整个通讯过程中，都不变化。
-
-
-`IP`：标记逻辑上的地址
-`MAC`：标记实际转发设备的地址
-`netmask网络掩码`: 和`IP`地址一起确定网络号
-`默认网关`：发送的`IP`不在同一个网段内，那么会把这个数据转发给，默认网关。(每台电脑，服务器都会配置默认网关)
-
-
-`route print`: 查看路由表
-
-![clipboard.png](/img/bV56gc)
-
-> pc + switch + router + server
-
-
-- `DNS`服务器用来解析出`IP`（类似电话簿）
-- `DFGATEWAY（默认网关）`用来对顶，当发送的数据包的目的ip不是当前网络时，此数据包包转发的目的`ip`
-- 在路由器中路由表指定数据包的”下一跳”的地址
-
-
-`server(服务器)`: 主机
-
-**访问baidu的过程**:
-所有访问都是第一次：
-- 先知道默认网关的`MAC`地址:
-1. 使用`ARP协议`获取默认网关`MAC`地址
-2. 组织数据 发送给默认网关（`IP`还是`DNS`服务器的`IP`,但是`MAC`地址是默认网关的`MAC`地址）
-3. 默认网关拥有把转发数据的能力，把数据转发给路由器
-4. 路由器根据自己的路由协议，选择一个合适的较快的路径，转发给目的网关（`DNS`所在的网关）
-5. 目的网关把数据转发给`DNS`服务器
-6. `DNS`服务器查询解析出`www.baidu.com`对应`IP`的地址，并原路返回给请求这个域名的`client`
-
-- 得到`www.baidu.com`对应的`IP`地址之后，会发送`TCP`3次握手，并进行连接。
-- 使用`HTTP`发送请求数据给`Web`服务器
-- `Web`服务器收到请求数据之后，通过查询自己的服务器得到相应的结果，原路返回给浏览器。
-- 浏览器接收到数据之后，通过浏览器自己的渲染功能显示
-- 浏览器关闭`TCP`链接,即4次挥手
-
-
-域名还是`IP`访问: `IP`访问三次握手，然后发送真正请求数据；`域名`访问`DNS`服务器，再然后三次握手，最后发送真正请求数据。
-
-`DHCP协议`：自动分配地址，当前网络的电脑中没有`ip`地址，自动分配。
-
-**DNS服务器**：
-
-作用：解析域名
-使用协议：`UDP`
-
-`pc`配置：
-默认网关，`DNS`服务器，`IP`地址，网络掩码
-
-![clipboard.png](/img/bV56L8)
-
-![clipboard.png](/img/bV56Mp)
-
-`router`配置：
-不同网段`IP`地址(充当默认网关)，多台路由器`IP`
-
-![clipboard.png](/img/bV56Nd)
-
-![clipboard.png](/img/bV56Nk)
-
-`server`配置：
-`IP`地址，网络掩码，各种协议配置
-
-![clipboard.png](/img/bV56NN)
-
-![clipboard.png](/img/bV56NW)
-
-
-> tcp三次握手，四次挥手
-
-
-![clipboard.png](/img/bV6bPm)
-
-`sequeue num`序列号, `ack num`确认包 等值的变化：
-
-`SYN`: 标记的`TCP`整个包的作用，也就是请求。
-`SYN + ACK`: 返回包的的格式
-`ACK`: 第二次请求格式
-
-![clipboard.png](/img/bV56VT)
-
-![clipboard.png](/img/bV56V6)
-
-![clipboard.png](/img/bV56Wn)
-
-第二次请求格式，还一并携带的数据包，而后`client`会发送确认数据包,并且`client`会自动关闭套接字，告知服务器。
-
-`PSH + ACK`: 第二次携带数据包格式
-`FIN + ACK`: 浏览器套接字关闭发送的包（服务端和客户端各自调用套接字的close都会发送一个包告知对方）
-
-![clipboard.png](/img/bV562q)
-
-![clipboard.png](/img/bV5605)
-
-三次握手作用：建立链接，保存信息。
-
-
-> TCP十种状态
-
-`netstat -n`: 显示协议统计信息和当前 TCP/IP 网络连接,。
-`-n`参数： 以数字形式显示地址和端口号
-
-只要客户端调用`close`,服务器的`recv`的数据长度为0，
-过一段时间客户端才会`close`，而服务器收到`TIME_WAIT`的包之后，就关闭`socket`。
-
-![clipboard.png](/img/bV6cp1)
-
-Note:
-
-- 当一端收到一个`FIN`，内核让`read`返回0来通知应用层另一端已经终止了向本端的数据传送
-- 发送`FIN`通常是应用层对`socket`进行关闭的结果
-
-> tcp的2MSL问题
-
-![clipboard.png](/img/bV6cxT)
-
-`TTL`: 一个数据包在网络上经过的路由器的最大值，经过路由器的个数。
-- 如果路由接收到的`TTL`值是0的话，不会转发当前数据包，会直接扔掉。
-- 每经过一个路由减1(从此路过，留下1)
-
-```
-UNIX 及类 UNIX 操作系统 ICMP 回显应答的 TTL 字段值为 255
-Compaq Tru64 5.0 ICMP 回显应答的 TTL 字段值为 64
-微软 Windows NT/2K操作系统 ICMP 回显应答的 TTL 字段值为 128 
-微软 Windows 95 操作系统 ICMP 回显应答的 TTL 字段值为 32
-```
-
-`MSL`: 一个数据包在网络上存储的最长时间（1min-2min）。
-`2MSL`：2倍的存活最长时间（2min-4min）。
-
-当第一次关闭，客户端没有`ACK`的时候，过一段时间服务器会再次发送`FIN`，最终收到这个数据包之后，就关闭掉通信。
-那边先`close`(不管是`client`还是`server`)就会等待`2MSL`时间。在这个时间中，这个套接字不会被释放，然后重启服务器的时候，导致**绑定失败**。
-
-`2MSL`问题原因：当`TCP`的一端发起主动关闭，在发出最后一个`ACK`包后，即第3次握手完成后发送了第四次握手的`AC`K包后就进入了`TIME_WAIT`状态，必须在此状态上停留两倍的`MSL`时间，等待`2MSL`时间主要目的是怕最后一个`ACK`包对方没收到，那么对方在**超时后将重发第三次握手的`FIN`包**，主动关闭端接到重发的`FIN`包后可以再发一个`ACK`应答包。`TIME_WAI`T状态 时两端的端口不能使用，要等到2MSL时间结束才可继续使用。
-
-导致结果：当连接处于2MSL等待阶段时任何**迟到的报文段都将被丢弃**。
-
-解决方法：可以通过设置`SO_REUSEADDR`选项达到不必等待`2MSL`时间结束再使用此端口。
-
-
-> 长连接、短连接
-
-`TCP`在真正的读写操作之前，`server`与`client`之间必须建立一个连接，当读写操作完成后，双方不再需要这个连接时它们可以释放这个连接，连接的建立通过三次握手，释放则需要四次握手，所以说每个连接的建立都是需要资源消耗和时间消耗的。
-
-长连接：
-一次`TCP`三次握手，发送数据，一直发送数据，最后四次握手关闭。 例如：观看视频
-短链接：
-`TCP`三次握手，发送数据，四次握手关闭。重新`TCP`三次握手，发送数据，四次握手关闭。如此反复。例如：访问网页
-
-TCP长/短连接的优点和缺点:
-- 长连接可以省去较多的`TCP`建立和关闭的操作，减少浪费，节约时间。对于频繁请求资源的客户来说，较适用于长连接。
-- 短连接对于服务器来说管理较为简单，存在的连接都是有用的连接，不需要额外的控制手段。但如果客户请求频繁，将在`TCP`的建立和关闭操作上浪费时间和带宽。
-- `client`与`server`之间的连接如果一直不关闭的话，会存在一个问题，随着客户端连接越来越多，`server`早晚有扛不住的时候，这时候`server`端需要采取一些策略，如关闭一些长时间没有读写事件发生的连接，这样可以避免一些恶意连接导致`server`端服务受损；如果条件再允许就可以以客户端机器为颗粒度，限制每个客户端的最大长连接数，这样可以完全避免某个的客户端连累后端服务。
-
-
-`TCP`长/短连接的应用场景：
-- 长连接多用于操作频繁，点对点的通讯，而且连接数不能太多情况。每个`TCP`连接都需要三次握手，这需要时间，如果每个操作都是先连接，再操作的话那么处理速度会降低很多，所以每个操作完后都不断开，再次处理时直接发送数据包就OK了，不用建立`TCP`连接。例如：数据库的连接用长连接，如果用短连接频繁的通信会造成`socket`错误，而且频繁的`socket` 创建也是对资源的浪费。
-- 而像`WEB`网站的`http`服务一般都用短链接，因为长连接对于服务端来说会耗费一定的资源，而像`WEB`网站这么频繁的成千上万甚至上亿客户端的连接用短连接会更省一些资源，如果用长连接，而且同时有成千上万的用户，如果每个用户都占用一个连接的话，那可想而知吧。所以并发量大，但每个用户无需频繁操作情况下需用短连好。
-
-
-> listen的队列长度
-
-
-`listen`参数问题: 首次一次达到该设置参数数值，后面关闭之后，已连接队列扔出一个，才能继续进行，再从半连接队列到已连接队列中。
-
-```
-tcpSerSocket.listen(connNum) 
-# connNum表示，半链接和已链接次数的总长度
-# 在Linux中不管写多少，都是系统会自己计算该值
-# Mac电脑系统上，用户写多少就是多少。
-```
-![clipboard.png](/img/bV6dJD)
-
-
-服务端：
-```
-
-#coding=utf-8
-from socket import *
-from time import sleep
-
-# 创建socket
-tcpSerSocket = socket(AF_INET, SOCK_STREAM)
-
-# 绑定本地信息
-address = ('', 7788)
-tcpSerSocket.bind(address)
-
-connNum = int(raw_input("请输入要最大的链接数:"))
-
-# 使用socket创建的套接字默认的属性是主动的，使用listen将其变为被动的，这样就可以接收别人的链接了
-tcpSerSocket.listen(connNum)
-
-# 在这个期间，如果有20个客户端调用了connect链接服务器，那么这个服务器的Linux底层，会自动维护2个队列（半链接和已链接）
-# 其中，半链接和已链接的总数为linsten中的值，如果这个值是5,那么，意味着此时最多只有5个客户端能够链接成功，而剩下15则会堵塞在connect函数
-for i in range(10):
-print(i)
-sleep(1)
-
-while True:
-
-# 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器
-newSocket, clientAddr = tcpSerSocket.accept() # 如果服务器调用了accept，那么Linux底层中的那个半链接和已链接中的总数就减少了一个，因此，此时的15个因为connect堵塞的客户端又会在进行连接 来争抢1个刚空出来的空位。
-print clientAddr
-sleep(1)
-```
-客户端：
-```
-#coding=utf-8
-from socket import *
-
-connNum = raw_input("请输入要链接服务器的次数:")
-for i in range(int(connNum)):
-s = socket(AF_INET, SOCK_STREAM)
-s.connect(("192.168.1.102", 7788))
-print(i)
-```
-
-Note:
-
-- `listen`中的`black`表示已经建立链接和半链接的总数
-- 如果当前已建立链接数和半链接数以达到设定值，那么新客户端就不会`connect`成功，而是等待服务器
-
-> 手动配置ip
-
-设置IP和掩码:
-```
-ifconfig eth0 192.168.5.40 netmask 255.255.255.0
-```
-设置网关:
-```
-route add default gw 192.168.5.1
-```
-
-> 常见网络攻击
-
-
-**tcp半链接攻击**
-
-`tcp`半链接攻击（`SYN Flood (SYN洪水)`）：是种典型的`DoS` (`Denial of Service，拒绝服务`) 攻击
-
-导致结果：服务器`TCP`连接资源耗尽，停止响应正常的`TCP`连接请求。
-
-三次链接的第一次就是半链接
-
-
-**dns攻击**
-
-`dns`使用的是`udp`协议，不稳定.
-
-`dns`服务器被劫持:
-需要攻击`dns`服务器，或者和`dns`服务器合作。
-一个域名服务器对其区域内的用户解析请求负责，但是并没有一个机制去监督它有没有认真地负责。 有些被攻击`dns`服务器故意更改一些域名的解析结果，将用户引导向一个错误的目标地址。
-用来阻止用户反问某些特定的网站，后者是将用户引导到广告页面，或者构造钓鱼网站，获取用户信息。
-
-`dns`欺骗：
-主动用一个假的`dns`应答来欺骗用户计算机，让其相信这个假的地址，并且抛弃真正的`dns`应答。 
-
-导致用户访问假的目的地址。 
-
-
-**查看域名解析的ip地址方法**
-
-```
-nslookup 域名
-
-# 例如
-nslookup baidu.com
-
-```
-
-![clipboard.png](/img/bV6fbl)
-
-
-**arp攻击**
-
-修改电脑的`mac`地址，使用中间人攻击。
-
-![clipboard.png](/img/bV6fbI)
-
-> NAT
-
-`NAT`: 网络地址转换器
-
-家庭上网:
-电话线 -> 调制解调器（猫） -> 路由器 -> 电脑,手机
-
-从`调制解调器`中出来的`IP`才可以访问到外网。
-
-
-`LAN`口: 局域网
-`WAN`口: 万维网
-
-![clipboard.png](/img/bV6fmj)
-
-路由器存在一张表，一个本地电脑和路由器对应到标识。 
-
-路由器功能：`代理`
-本地电脑不能访问，路由器把不能访问的地址扔掉。
-
-
-## 并发服务器
-
-> 单进程服务器
-
-简单单进程`TCP`服务器：
-
-```
-from socket import *
-
-serSocket = socket(AF_INET, SOCK_STREAM)
-
-# 重复使用绑定的信息
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
-# 作用：服务器先四次挥手到第一次，最终也等待2MSL时间。 服务器先结束，而且立即运行服务器，就不会出现
-
-localAddr = ('', 7788)
-
-serSocket.bind(localAddr)
-
-serSocket.listen(5)
-
-while True:
-print('主进程，等待新客户端的到来')
-newSocket, destAddr = serSocket.accept()
-print('主进程，接下来负责数据处理[%s]'%str(destAddr))
-
-try:
-while True:
-recvData = newSocket.recv(1024)
-if len(recvData) > 0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
-finally:
-newSocket.close() # 服务器主动关闭
-
-serSocket.close()
-```
-
-
-> 关闭监听套接字、已连接套接字的不同
-
-
-关闭监听套接字，意味着：不能再连接新的客户端连接。
-已连接套接字关闭，意味着：当前套接字不能再使用`send`和`recv`来收发数据。
-
-
-`COW写时拷贝`：到该需要时才去拷贝，不然都是引用，能共有才去共用。
-
-多进程服务器:
-
-```
-from socket import *
-from multiprocessing import *
-from time import sleep
-
-# 处理客户端的请求并为其服务
-def dealWithClient(newSocket,destAddr):
-while True:
-recvData = newSocket.recv(1024)
-if len(recvData)>0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
-
-newSocket.close()
-
-
-def main():
-
-serSocket = socket(AF_INET, SOCK_STREAM)
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
-localAddr = ('', 7788)
-serSocket.bind(localAddr)
-serSocket.listen(5)
-
-try:
-while True:
-print('主进程，等待新客户端的到来')
-newSocket,destAddr = serSocket.accept()
-
-print('主进程，接下来创建一个新的进程负责数据处理[%s]'%str(destAddr))
-client = Process(target=dealWithClient, args=(newSocket,destAddr))
-client.start()
-
-# 因为已经向子进程中copy了一份（引用），并且父进程中这个套接字也没有用处了
-# 所以关闭
-newSocket.close()
-finally:
-# 当为所有的客户端服务完之后再进行关闭，表示不再接收新的客户端的链接
-serSocket.close()
-
-if __name__ == '__main__':
-main()
-```
-
-- 通过为每个客户端创建一个进程的方式，能够同时为多个客户端进行服务
-- 当客户端不是特别多的时候，这种创建进程方式还可以，如果有几百上千，就不可取了，因为每次创建进程等过程需要较大的资源。
-
-多线程服务器:
-```
-#encode=utf-8
-from socket import *
-from multiprocessing import *
-from time import sleep
-
-
-# 客户端的请求并为其服务
-
-def dealWithClient ():
-while True:
-recv_data = new_socket.recv(1024)
-if len(recv_data) > 0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
-new_socket.close()
-
-
-def main ():
-ser_socket = socket(AF_INET, SOCK_STREAM)
-ser_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-local_addr = ('', 7788)
-ser_socket.bind(local_addr)
-ser_socket.listen(5)
-
-try:
-while True:
-print('等待客户端')
-new_socket, dest_addr = ser_socket.accpet()
-
-print('父进程[%s]'%str(dest_addr))
-client = Thread(target=deal_width_client, args=(new_socket, dest_addr))
-client.start()
-finally:
-ser_socket.close()
-
-if __name__ == '__main__':
-main()
-``` 
-
-> 单进程服务器-非堵塞模式
-
-
-```
-coding=utf-8
-from socket import *
+import os
 import time
 
-# 用来存储所有的新链接的socket
-g_socketList = []
+ret = os.fork() # 返回二个特殊值， 其中一个等于0（子进程），一个不固定的大于0的值（父进程，pid）。都是int类型。
 
-def main():
-serSocket = socket(AF_INET, SOCK_STREAM)
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
-localAddr = ('', 7788)
-serSocket.bind(localAddr)
-# 可以适当修改listen中的值来看看不同的现象
-serSocket.listen(1000)
-# 将套接字设置为非堵塞
-# 设置为非堵塞后，如果accept时，恰巧没有客户端connect，那么accept会
-# 产生一个异常，所以需要try来进行处理
-serSocket.setblocking(False)
+if ret == 0:
+while True:
+print('1')
+time.sleep(1)
+else:
+while True:
+print('2')
+time.sleep(1)
+```
+
+不一定父进程先执行，或子进程先执行，哪个进程先执行，是依靠操作系统调度算法。
+
+Note: `os.fork()`，只在`Unix/Linux/Mac`上运行，`windows`不可以。
+
+> getpid、getppid
+
+```
+import os
+
+ret = os.fork()
+print(ret)
+if ret > 0:
+print('父进程 - %d'%os.getpid())
+else:
+print('子进程 - %d - %d'%(os.getpid(), os.getppid()))
+
+"""
+1535
+父进程 - 1534
+0
+子进程 - 1535 - 1534
+"""
+```
+
+`os.getpid()`: 子进程的pid的值
+`os.getppid()`: 父进程的pid的值
+
+父进程中`fork`的返回值，就是刚刚创建出来的子进程的`pid`
+
+> 父子进程的先后顺序
+
+主进程执行完结束后，子进程没有结束。照样主进程结束掉，而子进程一样执行完程序。
+
+```
+import os
+import time
+
+ret = os.fork()
+
+if ret == 0:
+print('子进程')
+time.sleep(5)
+print('子进程over')
+else:
+print('父进程')
+time.sleep(3)
+
+print('over')
+```
+执行结果：
+```
+父进程
+子进程
+over
+linxingzhangdeMacBook-Air:python linxingzhang$ 子进程over
+over
+光标定位到当前位置
+```
+
+> 全局变量在多个进程中不共享
+
+```
+import os
+import time
+
+g_num = 100
+
+ret = os.fork()
+
+if ret == 0:
+g_num += 1
+print('process-c - %d'%g_num)
+else:
+time.sleep(3)
+print('process-p - %d'%g_num)
+```
+执行结果：
+```
+process-c - 101
+process-p - 100
+```
+在进程中，全局变量，局部变量，在各自进程的命名空间中，互不干预。
+进程和进程之间，数据无法共享。
+
+同一台电脑进程之间通信：管道，消息队列...
+不同一台电脑进程之间通信：网络
+
+
+> 多个fork
+
+第一种：多个`fork`情况，并列`fork`。
+```
+import os
+
+# 父进程
+ret = os.fork()
+
+if ret == 0:
+# 子进程
+print('1')
+else:
+# 父进程
+print('2')
+
+# 父子进程
+ret = os.fork()
+
+if ret == 0:
+# 孙子进程
+# 2儿子进程
+print('11')
+else:
+# 儿子进程
+# 父进程
+print('22')
+```
+执行结果：
+```
+2
+22
+1
+11
+11
+22
+```
+
+第二种`fork`情况，包含`fork`
+```
+import os
+
+# 父进程
+ret = os.fork()
+
+if ret == 0:
+# 子进程
+print('1')
+else:
+# 父进程
+print('2')
+
+ret = os.fork()
+
+if ret == 0:
+# 2儿子进程
+print('11')
+else:
+# 父进程
+print('22')
+```
+执行结果：
+```
+2
+22
+1
+11
+```
+
+父子进程的执行顺序：
+父进程、子进程执行顺序没有规律，完全取决于操作系统的**调度算法**
+
+> Process创建子进程
+
+
+`multiprocessing`模块是跨平台版本的多进程模块。
+
+```
+# coding=utf-8
+from multiprocessing import Process
+import time
+
+def test():
+while True:
+print('--test')
+time.sleep(2)
+ret = Process(target=test)
+
+ret.start() # 子进程执行代码
 
 while True:
+print('--mian')
+time.sleep(1)
+```
+当前执行结果：
+```
+--mian
+--test
+--mian
+--test
+--mian
+--mian
+--test
+--mian
+--mian
+... # 循环
+```
+-----
+```
+# coding=utf-8
+from multiprocessing import Process
+import os
+
+# 子进程执行的代码
+def run_proc(name):
+print('子进程运行中，name= %s ,pid=%d...' % (name,  os.getpid()))
+
+if __name__ == '__main__':
+print('父进程 %d.' % os.getpid())
+p = Process(target=run_proc, args=('test',))
+print('子进程将要执行')
+p.start() # 子进程开始
+p.join() # 等待进程标记结束后才继续往下走 # 堵塞
+print('子进程已结束')
+
+```
+执行结果
+```
+父进程 3045.
+子进程将要执行
+子进程运行中，name= test ,pid=3046...
+子进程已结束
+```
+
+创建子进程时，只需要传入一个执行函数和函数的参数，创建一个`Process`实例，用`start()`方法启动
+`join()`方法可以等待子进程结束后再继续往下运行，通常用于进程间的同步。
+
+
+主进程会等待所有的Process子进程先结束，然后再结束主进程。
+
+创建新的进程还能够使用类的方式，可以自定义一个类，继承Process类，每次实例化这个类的时候，就等同于实例化一个进程对象
+
+创建新的进程的另一种方式：`使用自定义类`，继承`Process`类，每次实例化当前自定义类的时候，等同与实例话一个进程对象。
+
+```
+from multiprocessing import Process
+import time
+
+class New_Process (Process):
+# 重写run方法
+def run(nPro): #run
+print(nPro) # t=<New_Process(New_Process-1, started)>
+while True:
+print('11')
+time.sleep(1)
+
+p = New_Process()
+p.start() # 没有传递target参数，会调用run方法
+
+while True:
+print('main')
+time.sleep(1)
+```
+-----
+```
+from multiprocessing import Process
+import time
+import os
+
+# 继承Process
+class Process_Class (Process):
+# 因为Process类本身也有__init__方法，这个子类相当于重写了Process的__init__方法，导致，并没有完全的初始化一个Process类，所以不能子类不能使用继承的方法和属性。
+# 解决：将继承类的本身传递给Process.__init__方法，完成这些初始化操作。
+def __init__(self, interval):
+Process.__init__(self)
+self.interval = interval
+
+# 重写Process类的run()方法
+def run(self):
+print("子进程(%s) 开始执行，父进程为（%s）"%(os.getpid(),os.getppid()))
+t_start = time.time()
+time.sleep(self.interval)
+t_stop = time.time()
+print("(%s)执行结束，耗时%0.2f秒"%(os.getpid(),t_stop-t_start))
+
+if __name__ == '__main__':
+t_start = time.time()
+print("当前程序进程(%s)"%os.getpid())
+p1 = Process_Class(2) # 实例化
+# 对一个不包含target属性的Process类执行start()方法，就会运行这个类中的run()方法，所以这里会执行p1.run()
+p1.start()
+p1.join()
+t_stop = time.time()
+print("(%s)执行结束，耗时%0.2f"%(os.getpid(),t_stop-t_start))
+```
+
+> Process语法结构
+
+```
+Process([group [, target [, name [, args [, kwargs]]]]])
+```
+
+- `target`: 这个进程实例所调用对象
+- `args`: 调用对象的位置参数元组
+- `kwargs`: 调用对象的关键字参数字典
+- `name`: 当前进程实例的别名
+
+Process类常用方法:
+
+`is_alive()`: 判断进程实例是否还在执行
+`join([timeout])`: 是否等待进程实例执行结果，或等待多少秒
+`start()`: 创建子进程
+`run()`: 如果没有给定`target`参数，对这个对象调用`start()`方法时，就执行对象中的`run()`方法
+`terminate()`: 不管任务是否完成，立即终止
+
+Process类常用属性：
+
+- `name`: 当前进程的实例别名，默认为`Process-N`, N从1开始递增的整数。
+- `pid`: 当前进程的实例`PID`值
+
+```
+
+# coding=utf-8
+from multiprocessing import Process
+import time
+import os
+
+# 两个子进程将会调用的两个方法
+def  worker_1(interval):
+print("worker_1,父进程(%s),当前进程(%s)"%(os.getppid(),os.getpid()))
+t_start = time.time()
+time.sleep(interval) # 程序将会被挂起interval秒
+t_end = time.time()
+print("worker_1,执行时间为'%0.2f'秒"%(t_end - t_start))
+
+def  worker_2(interval):
+print("worker_2,父进程(%s),当前进程(%s)"%(os.getppid(),os.getpid()))
+t_start = time.time()
+time.sleep(interval)
+t_end = time.time()
+print("worker_2,执行时间为'%0.2f'秒"%(t_end - t_start))
+
+# 输出当前程序的ID
+print("进程ID：%s"%os.getpid())
+
+# 创建两个进程对象，target指向这个进程对象要执行的对象名称，
+# args后面的元组中，是要传递给worker_1方法的参数，
+# 因为worker_1方法就一个interval参数，这里传递一个整数2给它，
+# 如果不指定name参数，默认的进程对象名称为Process-N，N为一个递增的整数
+p1 = Process(target=worker_1,args=(2,))
+p2 = Process(target=worker_2,name="alogy",args=(1,))
+
+# 使用"进程对象名称.start()"来创建并执行一个子进程，
+# 这两个进程对象在start后，就会分别去执行worker_1和worker_2方法中的内容
+p1.start()
+p2.start()
+
+# 同时父进程仍然往下执行，如果p2进程还在执行，将会返回True
+print("p2.is_alive=%s"%p2.is_alive())
+
+# 输出p1和p2进程的别名和pid
+print("p1.name=%s"%p1.name)
+print("p1.pid=%s"%p1.pid)
+print("p2.name=%s"%p2.name)
+print("p2.pid=%s"%p2.pid)
+
+# join括号中不携带参数，表示父进程在这个位置要等待p1进程执行完成后，
+# 再继续执行下面的语句，一般用于进程间的数据同步，如果不写这一句，
+# 下面的is_alive判断将会是True，在shell（cmd）里面调用这个程序时
+# 因为p2需要2秒以上才可能执行完成，父进程等待1秒很可能不能让p1完全执行完成，
+# 所以下面的print会输出True，即p1仍然在执行
+p1.join()
+print("p1.is_alive=%s"%p1.is_alive())
+```
+执行结果：
+```
+进程ID：14889
+p2.is_alive=True
+p1.name=Process-1
+p1.pid=14890
+p2.name=alogy
+p2.pid=14891
+worker_1,父进程(14889),当前进程(14890)
+worker_2,父进程(14889),当前进程(14891)
+worker_2,执行时间为'1.00'秒
+worker_1,执行时间为'2.00'秒
+p1.is_alive=False
+```
+
+> 进程池
+
+池`Pool`作用：缓冲
+进程池优点：增加使用率
+
+创建新的进程的另一种方式：`进程池Pool`
+
+创建一定数量的进程，然后需要使用的时候拿去使用，使用完毕后归还。
+
+```
+from multiprocessing import Pool
+import os
+import random
+import time
+
+def worker(num):
+for i in range(random.randint(1, 3)):
+print('pid = %d, num=%d'%(os.getpid(), num) )
+time.sleep(1)
+
+p = Pool(3)
+
+for i in range(10):
+p.apply_async(worker,(i )) # 向进程池中添加任务
+# 如果添加的任务数超过了进程池中的进程个数的话，那么会导致添加不进入到进程池中。
+# 添加到进程池中的任务，如果还没有被执行的话，那么会等待进程池中的进程完成一个任务之后，会自动去使用已经结束的进程，完成没有被执行的任务。
+
+p.close() # 关闭进程池，关闭后p实例不再接收新的请求
+p.join() # 等待p实例中的所有子进程执行完毕，主进程才会退出， 必须放在close语句之后。
+```
+
+> 多种方式的比较
+
+- `os.fork()`
+- `Process(target)`
+- `Pool`
+
+`os.fork()`:
+```
+ret = os.fork()
+if ret == 0:
+# 子进程
+else:
+# 父进程
+
+# 主进程会立马结束
+```
+
+`Process(target, args)`:
+```
+p1 = Process(atrget=fun)
+p1.start()
+p1.join() # 主进程会等待所有子进程都结束
+```
+
+`Pool()`
+```
+pool = Pool(3)
+pool.apply_asnyc(fun)
+pool.join() # 主进程在不join()的情况下，会立马结束，不会等待子进程结束之后再结束主进程。
+# 主进程一般都用来等待，任务在子进程中执行。（一般使用进程池）
+```
+
+> apply堵塞式添加任务
+
+阻塞式`apply()`创建多进程
+```
+from multiprocessing import Pool
+
+def worker():
+print(1)
+
+p = Pool(3)
+
+for i in range(5):
+p.apply(worker)
+
+p.close()
+p.join()
+```
+
+> 进程间通信-Queue
+
+`Queue`本身是一个消息列队程序
+
+- `Process`方式创建进程需要通过`Queue`创建通信
+- 进程池创建进程需要通过`Manager().Queue()`创建通信
+
+```
+
+#coding=utf-8
+from multiprocessing import Queue
+q = Queue(3) # 初始化一个Queue对象，最多可接收三条put消息
+q.put("消息1")
+q.put("消息2")
+print(q.full())  # False
+q.put("消息3")
+print(q.full()) # True
+
+# 因为消息列队已满下面的try都会抛出异常，第一个try会等待2秒后再抛出异常，第二个Try会立刻抛出异常
+try:
+q.put("消息4",True,2)
+except:
+print("消息列队已满，现有消息数量:%s"%q.qsize())
 
 try:
-newClientInfo = serSocket.accept()
-except Exception as result:
-pass
-else:
-print("一个新的客户端到来:%s"%str(newClientInfo))
-newClientInfo[0].setblocking(False)
-g_socketList.append(newClientInfo)
+q.put_nowait("消息4")
+except:
+print("消息列队已满，现有消息数量:%s"%q.qsize())
 
-# 用来存储需要删除的客户端信息
-needDelClientInfoList = []
 
-for clientSocket,clientAddr in g_socketList:
-try:
-recvData = clientSocket.recv(1024)
-if len(recvData)>0:
-print('recv[%s]:%s'%(str(clientAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(clientAddr))
-clientSocket.close()
-g_needDelClientInfoList.append((clientSocket,clientAddr))
-except Exception as result:
-pass
+# 先判断消息列队是否已满，再写入
+if not q.full():
+q.put_nowait("消息4")
 
-for needDelClientInfo in needDelClientInfoList:
-g_socketList.remove(needDelClientInfo)
+# 读取消息时，先判断消息列队是否为空，再读取
+if not q.empty():
+for i in range(q.qsize()):
+print(q.get_nowait())
+```
+
+`Queue()`语法：
+
+初始化`Queue()`对象时，(例如：`q = Queue()`)，若参数没有指定最大可接受消息的数量，或数量为负值，那么就代表可接受的消息数量没有上限(直到内存的尽头)
+
+`Queue.qsize()`: 返回当前队列包含的消息数量
+`Queue.empty()`: 如果队列为空，返回`True`，反之`False`
+`Queue.full()`: 如果队列满了，返回`True`，反之`False`
+`Queue.get_nowait()`: 相当于`Queue.get(False)`
+`Queue.put_nowait(item)`: 相当`Queue.put(item, False)`
+`Queue.get([block [, timeout]])`: 获取队列中的一条信息，然后将其队列中移除，`block`默认值为`True`
+- 如果`block`使用默认值，且没有设置`timeout`(单位秒)，消息队列如果为空，此时程序将被阻塞（停在读取状态)，直到从消息队列读到消息为止，如果设置了`timeout`，则会等待`timeout`秒，若没有读取到任何消息，则抛出`Queue.Empty`异常。
+- 如果`block`为`False`,消息队列为空，则会立刻抛出`Queue.Empty`异常
+`Queue.put(item, [block [, timeout]])`: 将`item`消息写入队列，`block`默认值为`True`
+- 如果`block`使用默认值，且没有设置`timeout`（单位秒），消息列队如果已经没有空间可写入，此时程序将被阻塞（停在写入状态），直到从消息列队腾出空间为止，如果设置了`timeout`，则会等待`timeout`秒，若还没空间，则抛出`Queue.Full`异常；
+- 如果`block`值为`False`，消息列队如果没有空间可写入，则会立刻抛出`Queue.Full`异常；
+
+> 多进程拷贝文件
+
+
+```
+#coding=utf-8
+from multiprocessing import Pool, Manager
+import os
+
+def copy_task (name, old_file, new_file, queue):
+print(old_file + '/' + name)
+fr = open(old_file + '/' + name)
+fw = open(new_file + '/' + name, 'w')
+
+con = fr.read()
+fw.write(con)
+
+fr.close()
+fw.close()
+
+queue.put(name)
+
+def main ():
+old_file = input('文件夹名字:')
+new_file = old_file + '_附件'
+os.mkdir(new_file)
+file_names = os.listdir(old_file)
+
+pool = Pool(5)
+queue = Manager().Queue()
+
+for file in file_names:
+pool.apply_async(copy_task, args=(file,  old_file, new_file, queue))
+
+num = 0
+all_num = len(file_names)
+while num < all_num:
+queue.get()
+num += 1
+copy_rate = num / all_num
+print('\rcopy进度是:%.2f%%'%(copy_rate * 100), end='')
+
+print('\n完成copy')
 
 if __name__ == '__main__':
 main()
 ```
 
-> select版服务器
+## 线程
 
-`select`作用: 完成`IO`的多路复用。能够完成对一些套接字的检测（所有的套接字 ）。 
+> Thread创建多线程
 
-多路复用：在没有开辟多进程，多线程的情况下， 能够完成并发服务器的开发。 
+进程：程序运行起来，程序的资源(资源分配的代码)
+线程：进程中的一种，真正执行代码的东西(`CPU`调度的代码)
+
+```
+from threading import Thread
+import time
+
+def test():
+print('111')
+time.sleep(1)
+
+for i in range(5):
+t = Thread(target=test)
+t.start()
+```
+
+- 创建好的线程，需要调用`start()`方法来启动。
+- 主线程任务结束，不会理解结束，会等待所有子线程结束。
+
+> 使用Thread子类完成创建多线程
+
+`pid`: 进程号
+`tid`: 线程号
+
+`0`号进程：切换进程，处理`CPU`。（切换进程）
+`1`号进程：间接或直接生成其它进程。
+
+```
+from threading import Thread
+import time
+
+
+class My_Thread(Thread):
+def run (self):
+for i in range(3):
+time.sleep(1)
+print(self.name) # name 属性中保存的是当前线程的名字
+
+if __name__ == '__main__':
+t = My_Thread()
+t.start()
+```
+
+> 线程的执行顺序
+
+```
+#coding=utf-8
+import threading
+import time
+
+class MyThread(threading.Thread):
+def run(self):
+for i in range(3):
+time.sleep(1)
+msg = "I'm "+self.name+' @ '+str(i)
+print(msg)
+def test():
+for i in range(5):
+t = MyThread()
+t.start()
+if __name__ == '__main__':
+test()
+
+# 只能保证每个线程都运行完整个run函数，但是线程的启动顺序、
+# run函数中每次循环的执行顺序都不能确定。
+```
+
+多线程程序的执行顺序是**不确定**的。当执行到`sleep`语句时，线程将被阻塞`（Blocked）`，到`sleep`结束后，线程进入就绪`（Runnable）`状态，等待调度。而线程调度将自行选择一个线程执行。
+
+- 每个线程一定会有一个名字，尽管上面的例子中没有指定线程对象的`name`，但是`python`会自动为线程指定一个名字。
+- 当线程的`run()`方法结束时该线程完成。
+- 无法控制线程调度程序，但可以通过别的方式来影响线程调度的方式。
+- 线程的几种状态:
+
+![clipboard.png](/img/bV4Rdw)
+
+> 线程共享全局变量
+
+```
+
+from threading import Thread
+import time
+
+g_num = 100
+
+def work1():
+global g_num
+for i in range(3):
+g_num += 1
+
+print("----in work1, g_num is %d---"%g_num)
+
+
+def work2():
+global g_num
+print("----in work2, g_num is %d---"%g_num)
+
+
+print("---线程创建之前g_num is %d---"%g_num)
+
+t1 = Thread(target=work1)
+t1.start()
+
+time.sleep(1)
+
+t2 = Thread(target=work2)
+t2.start()
+```
+执行结果：
+```
+---线程创建之前g_num is 100---
+----in work1, g_num is 103---
+----in work2, g_num is 103---
+```
+
+- 在一个进程内的所有线程共享全局变量，能够在不适用其他方式的前提下完成多线程之间的数据共享。
+- 线程是对全局变量的随意更改，造成多线程之间的全局变量的混乱（及线程非安全）
+
+
+全局变量共享的方式（修改）：
+- 变量前加`global`
+- 可变数据类型，例如`list`
+
+> 进程和线程的区别
+
+
+进程：能够完成多任务，比如：在一台电脑上能够同时运行多个`QQ`
+线程：能够完成多任务，比如：一个`QQ`中的多个聊天窗口
+
+定义的不同：
+
+- **进程是系统进行资源分配和调度的一个独立单位**
+- 线程是进程的一个实体，**是CPU调度和分派的基本单位**，它是比进程更小的能独立运行的基本单位。线程自己基本上不拥有系统资源，只拥有一点**在运行中必不可少的资源**(如程序计算器，一组寄存器和栈)，但是它可与同属一个进程的其他的线程共享进程所拥有的全部资源。
+
+区别：
+
+- 一个程序至少有一个进程,一个进程至少有一个线程.
+- 线程的划分尺度小于进程(资源比进程少)，使得多线程程序的并发性高。
+- 进程在执行过程中拥有独立的内存单元，而多个线程共享内存，从而极大地提高了程序的运行效率
+- 线线程不能够独立执行，必须依存在进程中
+
+优缺点：
+
+线程和进程在使用上各有优缺点：线程执行开销小，但不利于资源的管理和保护；而进程正相反。
+
+> 避免全局变量被修改的方式
+
+避免多线程多全局数据影响
+
+- 轮询
+- 互斥锁 (线程同步) **同步就是协同步调，按预定的先后次序进行运行**
+
+
+轮询:
+```
+from threading import Thread
+import time
+
+g_num = 0
+g_flag = 1
+
+def test1 ():
+global g_num
+global g_flag
+if g_flag == 1:
+for i in range(1000000):
+g_num += 1
+g_flag = 0
+print('--test--g_num=%d'%g_num)
+
+def test2 ():
+global g_num
+# 轮询
+while True:
+if g_flag != 1:
+for i in range(1000000):
+g_num += 1
+break
+print('--test2--g_num=%d'%g_num)
+
+p1 = Thread(target=test1)
+p1.start()
+p2 = Thread(target=test2)
+p2.start()
+```
+
+> 互斥锁
+
+```
+from threading import Thread, Lock
+import time
+
+
+g_num = 0
+
+def test1 ():
+global g_num
+mutex.acquire()
+for i in range(1000000):
+g_num += 1
+mutex.release()
+print('--test--g_num=%d'%g_num)
+
+def test2 ():
+global g_num
+# 轮询
+mutex.acquire()
+for i in range(1000000):
+g_num += 1
+mutex.release()
+print('--test2--g_num=%d'%g_num)
+
+mutex = Lock() # 互斥锁，默认是没有上锁到
+# 一方成功上锁，那么另一方会堵塞(一直等待)到这个锁被解开为止
+# 一个线程释放，其它线程都会执行
+
+p1 = Thread(target=test1)
+p1.start()
+
+p2 = Thread(target=test2)
+p2.start()
+```
+-----
+```
+# 创建锁
+mutex = threading.Lock()
+# 锁定
+mutex.acquire([blocking])
+# 释放
+mutex.release()
+```
+锁的好处：
+- 确保了某段关键代码只能由一个线程从头到尾完整地执行
+锁的坏处:
+- 阻止了多线程并发执行，包含锁的某段代码实际上只能以单线程模式执行，效率就大大的下降
+- 由于可以存在多个锁，不同的线程持有不同的锁，并试图获取对方持有的锁，可能会造成死锁。
+
+> 多线程使用非共享变量
+
+仅仅是**读取值**，不用调用`global`
+设置值的时候，需要加互斥锁
+
+在多线程开发中，全局变量是多个线程都共享的数据，而局部变量等是各自线程的，是非共享的（线程中的局部变量，各自不能访问，各自不影响。）
+
+> 死锁
+
+在线程间共享多个资源的时候，如果两个线程分别占用一部分资源并且同时等待对方的资源，就会造成死锁。
+尽管死锁很少发生，但一旦发生就会造成应用的停止响应。
+
+死锁例子：
+```
+#coding=utf-8
+import threading
+import time
+
+class MyThread1(threading.Thread):
+def run(self):
+if mutexA.acquire():
+print(self.name+'----do1---up----')
+time.sleep(1)
+
+if mutexB.acquire():
+print(self.name+'----do1---down----')
+mutexB.release()
+mutexA.release()
+
+class MyThread2(threading.Thread):
+def run(self):
+if mutexB.acquire():
+print(self.name+'----do2---up----')
+time.sleep(1)
+if mutexA.acquire():
+print(self.name+'----do2---down----')
+mutexA.release()
+mutexB.release()
+
+mutexA = threading.Lock()
+mutexB = threading.Lock()
+
+if __name__ == '__main__':
+t1 = MyThread1()
+t2 = MyThread2()
+t1.start()
+t2.start()
+```
+
+**避免死锁**
+
+- 程序设计时要尽量避免（银行家算法）
+- 添加超时时间: `mutexB.acquire(timeout=2)`
+
+> 多线程有序执行
+
+同步就是协调步调，按预定的先后次序进行运行
+
+阻塞，非阻塞：等下执行，还是不等立刻执行。
+同步，异步：多方协同执行，是一同执行，还是顺序执行。
+
+```
+from threading import Thread,Lock
+from time import sleep
+
+class Task1(Thread):
+def run(self):
+while True:
+if lock1.acquire():
+print("------Task 1 -----")
+sleep(0.5)
+lock2.release()
+
+class Task2(Thread):
+def run(self):
+while True:
+if lock2.acquire():
+print("------Task 2 -----")
+sleep(0.5)
+lock3.release()
+
+class Task3(Thread):
+def run(self):
+while True:
+if lock3.acquire():
+print("------Task 3 -----")
+sleep(0.5)
+lock1.release()
+
+# 使用Lock创建出的锁默认没有“锁上”
+lock1 = Lock()
+# 创建另外一把锁，并且“锁上”
+lock2 = Lock()
+lock2.acquire()
+# 创建另外一把锁，并且“锁上”
+lock3 = Lock()
+lock3.acquire()
+
+t1 = Task1()
+t2 = Task2()
+t3 = Task3()
+
+t1.start()
+t2.start()
+t3.start()
+```
+
+线程的同步：可以使用互斥锁完成多个任务，有序的进程工作。
+
+> Queue
+
+生产者与消费者模式来解决耦合的问题
+
+`Queue`：
+- 对于`Queue`，在多线程通信之间扮演重要的角色(解耦)
+- 添加数据到队列中，使用`put()`方法
+- 从队列中取数据，使用`get()`方法
+- 判断队列中是否还有数据，使用`qsize()`方法
+
+
+> ThreadLocal对象
+
+`ThreadLocal`对象在线程中的使用
+
+在多线程环境下，每个线程都有自己的数据。一个线程使用自己的局部变量比使用全局变量好，因为局部变量只有线程自己能看见，不会影响其他线程，而全局变量的修改必须加锁。
+
+既可以具有各自线程的单独变量，有可以互不影响方法：
+- 使用字典，定义全局变量。
+- `ThreadLocal`对象
+
+一个`ThreadLocal`变量虽然是全局变量，但每个线程都只能读写自己线程的独立副本，互不干扰。`ThreadLocal`解决了参数在一个线程中各个函数之间互相传递的问题
+
+```
+import threading
+
+
+local = threading.local()
+
+def process_student():
+std = local.student
+print('Hello, %s (in %s)'%(std, threading.current_thread().name))
+
+def process_thread(name):
+local.student = name
+process_student()
+
+t1 = threading.Thread(target=process_thread, args=('xixixi',), name='Thread-A')
+t2 = threading.Thread(target=process_thread, args=('hahaha',), name='Thread-B')
+
+t1.start()
+t2.start()
+t1.join()
+t1.join()
+```
+
+`ThreadLocal`最常用的地方就是为每个线程绑定一个**数据库连接**，**HTTP请求**，**用户身份信息**等，这样一个线程的所有调用到的处理函数都可以非常方便地访问这些资源。
+
+> 异步的实现
+
+```
+from multiprocessing import Pool
+import time
+import os
+
+def test():
+print("---进程池中的进程---pid=%d,ppid=%d--"%(os.getpid(),os.getppid()))
+for i in range(3):
+print("----%d---"%i)
+time.sleep(1)
+return "hhhh"
+
+def test2(args):
+print("---callback func--pid=%d"%os.getpid())
+print("---callback func--args=%s"%args)
+
+pool = Pool(3)
+pool.apply_async(func=test,callback=test2)
+
+time.sleep(5)
+
+print("----主进程-pid=%d----"%os.getpid())
+```
+`callback`主进程返回执行。
+子进程返回值到主进程中。
+主进程放下当前到任务，去执行其它任务，然后回到执行放下到任务。
+
+> GIL问题
+
+全局解释器锁（GIL）
+
+`Python`使用了全局解释锁(GIL)的原因，代码并不能同时在多核上并发的运行，也就是说，`Python`多线程不能并发。
+
+`GIL`是多线程间的一把互斥锁，并且是一把全局锁，它保证了`Cpython`在内存管理上面是线程安全的。
+
+原因：
+为了发挥多核`CPU`性能，程序多采用多线程/多进程方式设计。对于多核`CPU`，操作系统是同时可以启动多个线程分别在不同的核心上运行，但是由于`GIL`是关于线程的全局锁，就可能导致某个任务不停的`acquire`到`GIL`，使得其它核心线程停在`retry GIL`，造成了阻塞的现象。
+
+解决方法：
+
+- 使用多进程。
+`GIL`是针对线程的锁，在`Python`中使用多进程编程。
+- 在`Python`不合适大量的数学计算，将这些需要大量计算的程序移到`C/C++`中去实现。
+- 从`Python 3.2`开始，实现了新的`GIL`
+比之前的`GIL`增加了一个`flag`，来控制等待或释放的状态
+
+
+
 
