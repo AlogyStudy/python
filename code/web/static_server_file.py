@@ -19,14 +19,25 @@ def hand_client(cli_sock):
     # 解析请求报文
     # GET / HTTP/1.1
     request_start_line = request_lines[0]
-    re.match(r'\w+\s+(/[^ ]*)\s+', request_start_line).group(1)
+    file_name = re.match(r'\w+\s+(/[^ ]*)', request_start_line.decode('utf-8')).group(1)
+    if '/' == file_name: # 常量写在右边，变量写在左边
+        file_name = '/index.html'
 
-    
+    # 打开文件，读取内容
+    try:
+        file = open(HTML_ROOT_DIR + file_name, 'rb')
+    except IOError:
+        response_data_line = 'HTTP1.1 404 not found\r\n'
+        response_data_head = 'Server: alogy server\r\n'
+        response_data_body = 'the file is not found!'
+    else:            
+        file_data = file.read()
+        file.close()    
+        # 构造客户端返回数据
+        response_data_line = 'HTTP1.1 200 OK\r\n'
+        response_data_head = 'Server: alogy server\r\n'
+        response_data_body = file_data.decode('utf-8')
 
-    # 构造客户端返回数据
-    response_data_line = 'HTTP1.1 200 OK\r\n'
-    response_data_head = 'Server: alogy server\r\n'
-    response_data_body = 'hello world\r\n'
     response = response_data_line + response_data_head + '\r\n' + response_data_body
     print('response data:', response)
     cli_sock.send(bytes(response, 'utf-8'))
@@ -34,6 +45,7 @@ def hand_client(cli_sock):
 
 def main():
     ser_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ser_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     ser_sock.bind(('', 7329))
     ser_sock.listen(127)
 
