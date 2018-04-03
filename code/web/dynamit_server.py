@@ -41,10 +41,14 @@ class HttpServer(object):
         # GET / HTTP/1.1
         request_start_line = request_lines[0]
         file_name = re.match(r'\w+\s+(/[^ ]*)', request_start_line.decode('utf-8')).group(1)
+        method = re.match(r'(\w+)\s+/[^ ]*', request_start_line.decode('utf-8')).group(1)
 
         if file_name.endswith('.py'):
             module = __import__(file_name[1:-3])
-            env = {}
+            env = {
+                "PATH_INFO": file_name,
+                "METHOD": method
+            }
             response_body = module.application(env, self.start_response)
             response = self.response_headers + '\r\n' + response_body
         else:    

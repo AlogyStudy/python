@@ -23,7 +23,7 @@ TCP/IP协议(协议族)
 四层分类：`链路层` -> `网络层` -> `传输层` -> `应用层`
 七层分类：`物理层` -> `数据链路层` -> `网络层` -> `传输层` -> `会话层` -> `表示层` -> `应用层`
 
-![clipboard.png](/images/bV5luN.png)
+![clipboard.png](/img/bV5luN)
 
 网际层也称为：网络层
 网络接口层也称为：链路层
@@ -37,7 +37,7 @@ TCP/IP协议(协议族)
 
 > 端口
 
-端口:
+端口: 
 - 操作系统为了**区分数据给哪个进程**，增加了一个标识**端口**。
 - 进出进程的通道
 
@@ -50,12 +50,12 @@ TCP/IP协议(协议族)
 
 端口分类：
 - 知名端口
-知名端口是众所周知的端口号，范围从0到1023: `80`端口分配给`HTTP`服务。`21`端口分配给`FTP`服务。`22`端口分配给`SSH`服务
+    知名端口是众所周知的端口号，范围从0到1023: `80`端口分配给`HTTP`服务。`21`端口分配给`FTP`服务。`22`端口分配给`SSH`服务
 - 动态端口
-动态端口的范围是从1024到65535。
-它一般不固定分配某种服务，而是动态分配。
-动态分配是指当一个系统进程或应用程序进程需要网络通信时，它向主机申请一个端口，主机从可用的端口号中分配一个供它使用。
-当这个进程关闭时，同时也就释放了所占用的端口号。
+    动态端口的范围是从1024到65535。
+    它一般不固定分配某种服务，而是动态分配。
+    动态分配是指当一个系统进程或应用程序进程需要网络通信时，它向主机申请一个端口，主机从可用的端口号中分配一个供它使用。
+    当这个进程关闭时，同时也就释放了所占用的端口号。
 
 查看端口: `netstat -an`
 
@@ -164,7 +164,7 @@ s = socket.socket(socket.AF_INIT, socket.SOCK_DGRAM)
 `UDP`特点：
 
 - `UDP`是面向无连接的通讯协议，`UDP`数据报括目的端口号和源端口号信息，由于通讯不需要连接，所以可以实现广播发送。
-- `UDP`传输数据时有大小限制，每个被传输的数据报必须限定在64KB之内。
+- `UDP`传输数据时有大小限制，每个被传输的数据报必须限定在64KB之内。 
 - `UDP`是一个不可靠的协议，发送方所发送的数据报并不一定以相同的次序到达接收方。
 
 `UDP`一般用于**多点通信**和**实时的数据业务**:
@@ -301,10 +301,10 @@ udpSocket.bind(bindAddr)
 
 num = 1
 while True:
-recvData = udpSocket.recvfrom(1024)
-udpSocket.sendto(recvData[0], recvData[1]) # 将接收到的数据再发送给对方
-print('已经将接收到的第%d个数据返回给对方,内容为:%s'%(num, recvData[0]))
-num += 1
+    recvData = udpSocket.recvfrom(1024)
+    udpSocket.sendto(recvData[0], recvData[1]) # 将接收到的数据再发送给对方
+    print('已经将接收到的第%d个数据返回给对方,内容为:%s'%(num, recvData[0]))
+    num += 1
 
 udpSocket.close()
 ```
@@ -344,15 +344,15 @@ s.sendto("Hi", dest)
 print "等待对方回复（按ctrl+c退出）"
 
 while True:
-(buf, address) = s.recvfrom(2048)
-print "Received from %s: %s" % (address, buf)
+    (buf, address) = s.recvfrom(2048)
+    print "Received from %s: %s" % (address, buf)
 ```
 
 
 ## tftp文件下载器
 
 `wireshark`流经电脑中的数据，都可以检测到。
-
+ 
 `cs架构`：`client`, `server`
 `bs架构`：`browser`, `server`
 
@@ -391,10 +391,10 @@ TFTP（Trivial File Transfer Protocol,简单文件传输协议）
 | 操作码 | 功能 |
 |: --- :|: --- :|
 |1  |读请求，即下载|
-|2    |写请求，即上传|
-|3    |表示数据包，即DATA|
-|4    |确认码，即ACK|
-|5    |错误|
+|2	|写请求，即上传|
+|3	|表示数据包，即DATA|
+|4	|确认码，即ACK|
+|5	|错误|
 
 `pack`和`unpack`的使用:
 
@@ -438,7 +438,7 @@ socket.sendTo(senData, senAddr)
 recvData = udpSocket.recvfrom(1024)
 cmdTuple = struct.unpack('!HH', recvData[:4])
 print(cmdTuple)
-```
+``` 
 
 客户端：
 ```
@@ -453,17 +453,17 @@ serAddr = ('192.168.1.102', 7788)
 tcpClientSocket.connect(serAddr)
 
 while True:
-# 提示用户输入数据
-sendData = input("send：")
+    # 提示用户输入数据
+    sendData = input("send：")
 
-if len(sendData) > 0:
-tcpClientSocket.send(sendData)
-else:
-break
+    if len(sendData) > 0:
+        tcpClientSocket.send(sendData)
+    else:
+        break
 
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = tcpClientSocket.recv(1024)
-print 'recv:',recvData
+    # 接收对方发送过来的数据，最大接收1024个字节
+    recvData = tcpClientSocket.recv(1024)
+    print 'recv:',recvData
 
 # 关闭套接字
 tcpClientSocket.close()
@@ -484,27 +484,27 @@ tcpSerSocket.bind(address)
 tcpSerSocket.listen(5)
 
 while True:
-# 如果有新的客户端来链接服务器，那么就产生一个信心的套接字专门为这个客户端服务器
-# newSocket用来为这个客户端服务
-# tcpSerSocket就可以省下来专门等待其他新客户端的链接
-newSocket, clientAddr = tcpSerSocket.accept()
+    # 如果有新的客户端来链接服务器，那么就产生一个信心的套接字专门为这个客户端服务器
+    # newSocket用来为这个客户端服务
+    # tcpSerSocket就可以省下来专门等待其他新客户端的链接
+    newSocket, clientAddr = tcpSerSocket.accept()
 
-while True:
-# 接收对方发送过来的数据，最大接收1024个字节
-recvData = newSocket.recv(1024)
+    while True:
+        # 接收对方发送过来的数据，最大接收1024个字节
+        recvData = newSocket.recv(1024)
 
-# 如果接收的数据的长度为0，则意味着客户端关闭了链接
-if len(recvData) > 0:
-print('recv:', recvData)
-else:
-break
+        # 如果接收的数据的长度为0，则意味着客户端关闭了链接
+        if len(recvData) > 0:
+            print('recv:', recvData)
+        else:
+            break
 
-# 发送一些数据到客户端
-sendData = input('send:')
-newSocket.send(sendData)
+        # 发送一些数据到客户端
+        sendData = input('send:')
+        newSocket.send(sendData)
 
-# 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
-newSocket.close()
+    # 关闭为这个客户端服务的套接字，只要关闭了，就意味着为不能再为这个客户端服务了，如果还需要服务，只能再次重新连接
+    newSocket.close()
 
 # 关闭监听套接字，只要这个套接字关闭了，就意味着整个程序不能再接收任何新的客户端的连接
 tcpSerSocket.close()
@@ -608,7 +608,7 @@ Note:
 `UDP`在发送数据的时候，因为没有之前的链接，在每次发送的数据的时候，需要每次填写接收方的`ip`和`port`
 
 
-模拟QQ聊天：
+模拟QQ聊天： 
 
 客户端：
 
@@ -622,17 +622,17 @@ addr = ('192.168.1.201', 8180)
 cSocket.connect(addr)
 
 while True:
-sendData = input('data: ')
+        sendData = input('data: ')
 
-if len(sendData) > 0:
-cSocket.send(sendData)
-else:
-break
+        if len(sendData) > 0:
+                cSocket.send(sendData)
+        else:
+                break
 
-# 接收对方发送的数据，最大值1024个字节
-recvData = cSocket.recv(1024)
+        # 接收对方发送的数据，最大值1024个字节
+        recvData = cSocket.recv(1024)
 
-print('return data: %s'%recvData)
+        print('return data: %s'%recvData)
 
 cSocket.close()
 ```
@@ -649,17 +649,17 @@ sSocket.bind(adder)
 sSocket.listen(5)
 
 while True:
-newSocket, clientAddr = sSocket.accept()
+        newSocket, clientAddr = sSocket.accept()
 
-while True:
-recvData = newSocket.recv(1024)
-
-# 如果接收到客户端发送的数据为0，表示客户端已经下线
-if len(recvData) > 0:
-print('recv: ', recvData)
-else:
-break # 退出
-newSocket.close() # 关闭新的Socket
+        while True:
+                recvData = newSocket.recv(1024)
+                    
+                # 如果接收到客户端发送的数据为0，表示客户端已经下线
+                if len(recvData) > 0: 
+                        print('recv: ', recvData)
+                else:
+                        break # 退出
+        newSocket.close() # 关闭新的Socket
 
 
 sSocket.close()
@@ -679,26 +679,26 @@ End Devices：终端设备
 ```
 
 辅助软件: `Cisco Packet Tracer`
-
+ 
 > 通过集线器组网
 
 - `hub（集线器）`作用： 能够**完成多个电脑的链接**
 - 每个数据包的发送都是以**广播的形式**进行的，容易堵塞网络(任何数据，每次都是以广播形式发送)
 
 不允许一条网线之间有三台或以上的电脑一起链接，会导致数据混乱。需要使用`hub（集线器）`，交换机等设备解决。
-
+ 
 网络掩码:
 `C`类默认掩码：`255.255.255.0`
 `B`类默认掩码：`255.255.0.0`
 `A`类默认掩码：`255.0.0.0`
 网络掩码必须和`IP`一齐出现，才有作用。
-
+ 
 网络掩码作用：网络掩码按位与`IP`地址 => 网络号
 
-网络号相同处于同一个网段，才可以通信。
+网络号相同处于同一个网段，才可以通信。 
 
 > 通过交换机组网
-
+ 
 网络交换机介绍:
 网络交换机(又称“网络交换器”)，是一个扩大网络的器材，能为子网络提供更多的连接端口，以便连接更多的计算机，具有性能比高，高度灵活，相对简单，易于实现等特点。
 以太网技术已
@@ -812,13 +812,13 @@ Note:
 **访问baidu的过程**:
 所有访问都是第一次：
 - 先知道默认网关的`MAC`地址:
-1. 使用`ARP协议`获取默认网关`MAC`地址
-2. 组织数据 发送给默认网关（`IP`还是`DNS`服务器的`IP`,但是`MAC`地址是默认网关的`MAC`地址）
-3. 默认网关拥有把转发数据的能力，把数据转发给路由器
-4. 路由器根据自己的路由协议，选择一个合适的较快的路径，转发给目的网关（`DNS`所在的网关）
-5. 目的网关把数据转发给`DNS`服务器
-6. `DNS`服务器查询解析出`www.baidu.com`对应`IP`的地址，并原路返回给请求这个域名的`client`
-
+    1. 使用`ARP协议`获取默认网关`MAC`地址
+    2. 组织数据 发送给默认网关（`IP`还是`DNS`服务器的`IP`,但是`MAC`地址是默认网关的`MAC`地址）
+    3. 默认网关拥有把转发数据的能力，把数据转发给路由器
+    4. 路由器根据自己的路由协议，选择一个合适的较快的路径，转发给目的网关（`DNS`所在的网关）
+    5. 目的网关把数据转发给`DNS`服务器
+    6. `DNS`服务器查询解析出`www.baidu.com`对应`IP`的地址，并原路返回给请求这个域名的`client`
+  
 - 得到`www.baidu.com`对应的`IP`地址之后，会发送`TCP`3次握手，并进行连接。
 - 使用`HTTP`发送请求数据给`Web`服务器
 - `Web`服务器收到请求数据之后，通过查询自己的服务器得到相应的结果，原路返回给浏览器。
@@ -912,7 +912,7 @@ Note:
 ```
 UNIX 及类 UNIX 操作系统 ICMP 回显应答的 TTL 字段值为 255
 Compaq Tru64 5.0 ICMP 回显应答的 TTL 字段值为 64
-微软 Windows NT/2K操作系统 ICMP 回显应答的 TTL 字段值为 128
+微软 Windows NT/2K操作系统 ICMP 回显应答的 TTL 字段值为 128 
 微软 Windows 95 操作系统 ICMP 回显应答的 TTL 字段值为 32
 ```
 
@@ -955,7 +955,7 @@ TCP长/短连接的优点和缺点:
 `listen`参数问题: 首次一次达到该设置参数数值，后面关闭之后，已连接队列扔出一个，才能继续进行，再从半连接队列到已连接队列中。
 
 ```
-tcpSerSocket.listen(connNum)
+tcpSerSocket.listen(connNum) 
 # connNum表示，半链接和已链接次数的总长度
 # 在Linux中不管写多少，都是系统会自己计算该值
 # Mac电脑系统上，用户写多少就是多少。
@@ -985,15 +985,15 @@ tcpSerSocket.listen(connNum)
 # 在这个期间，如果有20个客户端调用了connect链接服务器，那么这个服务器的Linux底层，会自动维护2个队列（半链接和已链接）
 # 其中，半链接和已链接的总数为linsten中的值，如果这个值是5,那么，意味着此时最多只有5个客户端能够链接成功，而剩下15则会堵塞在connect函数
 for i in range(10):
-print(i)
-sleep(1)
+	print(i)
+	sleep(1)
 
 while True:
 
-# 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器
-newSocket, clientAddr = tcpSerSocket.accept() # 如果服务器调用了accept，那么Linux底层中的那个半链接和已链接中的总数就减少了一个，因此，此时的15个因为connect堵塞的客户端又会在进行连接 来争抢1个刚空出来的空位。
-print clientAddr
-sleep(1)
+    # 如果有新的客户端来链接服务器，那么就产生一个新的套接字专门为这个客户端服务器
+    newSocket, clientAddr = tcpSerSocket.accept() # 如果服务器调用了accept，那么Linux底层中的那个半链接和已链接中的总数就减少了一个，因此，此时的15个因为connect堵塞的客户端又会在进行连接 来争抢1个刚空出来的空位。
+    print clientAddr
+    sleep(1)
 ```
 客户端：
 ```
@@ -1002,9 +1002,9 @@ from socket import *
 
 connNum = raw_input("请输入要链接服务器的次数:")
 for i in range(int(connNum)):
-s = socket(AF_INET, SOCK_STREAM)
-s.connect(("192.168.1.102", 7788))
-print(i)
+    s = socket(AF_INET, SOCK_STREAM)
+    s.connect(("192.168.1.102", 7788))
+    print(i)
 ```
 
 Note:
@@ -1045,9 +1045,9 @@ route add default gw 192.168.5.1
 用来阻止用户反问某些特定的网站，后者是将用户引导到广告页面，或者构造钓鱼网站，获取用户信息。
 
 `dns`欺骗：
-主动用一个假的`dns`应答来欺骗用户计算机，让其相信这个假的地址，并且抛弃真正的`dns`应答。
+主动用一个假的`dns`应答来欺骗用户计算机，让其相信这个假的地址，并且抛弃真正的`dns`应答。 
 
-导致用户访问假的目的地址。
+导致用户访问假的目的地址。 
 
 
 **查看域名解析的ip地址方法**
@@ -1083,8 +1083,8 @@ nslookup baidu.com
 `WAN`口: 万维网
 
 ![clipboard.png](/img/bV6fmj)
-
-路由器存在一张表，一个本地电脑和路由器对应到标识。
+ 
+路由器存在一张表，一个本地电脑和路由器对应到标识。 
 
 路由器功能：`代理`
 本地电脑不能访问，路由器把不能访问的地址扔掉。
@@ -1112,20 +1112,20 @@ serSocket.bind(localAddr)
 serSocket.listen(5)
 
 while True:
-print('主进程，等待新客户端的到来')
-newSocket, destAddr = serSocket.accept()
-print('主进程，接下来负责数据处理[%s]'%str(destAddr))
+    print('主进程，等待新客户端的到来')
+    newSocket, destAddr = serSocket.accept()
+    print('主进程，接下来负责数据处理[%s]'%str(destAddr))
 
-try:
-while True:
-recvData = newSocket.recv(1024)
-if len(recvData) > 0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
-finally:
-newSocket.close() # 服务器主动关闭
+    try:
+        while True:
+            recvData = newSocket.recv(1024)
+            if len(recvData) > 0:
+                print('recv[%s]:%s'%(str(destAddr), recvData))
+            else:
+                print('[%s]客户端已经关闭'%str(destAddr))
+                break
+    finally:
+        newSocket.close() # 服务器主动关闭
 
 serSocket.close()
 ```
@@ -1149,43 +1149,43 @@ from time import sleep
 
 # 处理客户端的请求并为其服务
 def dealWithClient(newSocket,destAddr):
-while True:
-recvData = newSocket.recv(1024)
-if len(recvData)>0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
+    while True:
+        recvData = newSocket.recv(1024)
+        if len(recvData)>0:
+            print('recv[%s]:%s'%(str(destAddr), recvData))
+        else:
+            print('[%s]客户端已经关闭'%str(destAddr))
+            break
 
-newSocket.close()
+    newSocket.close()
 
 
 def main():
 
-serSocket = socket(AF_INET, SOCK_STREAM)
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
-localAddr = ('', 7788)
-serSocket.bind(localAddr)
-serSocket.listen(5)
+    serSocket = socket(AF_INET, SOCK_STREAM)
+    serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+    localAddr = ('', 7788)
+    serSocket.bind(localAddr)
+    serSocket.listen(5)
 
-try:
-while True:
-print('主进程，等待新客户端的到来')
-newSocket,destAddr = serSocket.accept()
+    try:
+        while True:
+            print('主进程，等待新客户端的到来')
+            newSocket,destAddr = serSocket.accept()
 
-print('主进程，接下来创建一个新的进程负责数据处理[%s]'%str(destAddr))
-client = Process(target=dealWithClient, args=(newSocket,destAddr))
-client.start()
+            print('主进程，接下来创建一个新的进程负责数据处理[%s]'%str(destAddr))
+            client = Process(target=dealWithClient, args=(newSocket,destAddr))
+            client.start()
 
-# 因为已经向子进程中copy了一份（引用），并且父进程中这个套接字也没有用处了
-# 所以关闭
-newSocket.close()
-finally:
-# 当为所有的客户端服务完之后再进行关闭，表示不再接收新的客户端的链接
-serSocket.close()
+            # 因为已经向子进程中copy了一份（引用），并且父进程中这个套接字也没有用处了
+            # 所以关闭
+            newSocket.close()
+    finally:
+        # 当为所有的客户端服务完之后再进行关闭，表示不再接收新的客户端的链接
+        serSocket.close()
 
 if __name__ == '__main__':
-main()
+    main()
 ```
 
 - 通过为每个客户端创建一个进程的方式，能够同时为多个客户端进行服务
@@ -1202,41 +1202,41 @@ from time import sleep
 # 客户端的请求并为其服务
 
 def dealWithClient ():
-while True:
-recv_data = new_socket.recv(1024)
-if len(recv_data) > 0:
-print('recv[%s]:%s'%(str(destAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(destAddr))
-break
-new_socket.close()
+        while True:
+                recv_data = new_socket.recv(1024)
+                if len(recv_data) > 0:
+                        print('recv[%s]:%s'%(str(destAddr), recvData))
+                else:
+                        print('[%s]客户端已经关闭'%str(destAddr))
+                        break
+                new_socket.close()
 
 
 def main ():
-ser_socket = socket(AF_INET, SOCK_STREAM)
-ser_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-local_addr = ('', 7788)
-ser_socket.bind(local_addr)
-ser_socket.listen(5)
+        ser_socket = socket(AF_INET, SOCK_STREAM)
+        ser_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        local_addr = ('', 7788)
+        ser_socket.bind(local_addr)
+        ser_socket.listen(5)
 
-try:
-while True:
-print('等待客户端')
-new_socket, dest_addr = ser_socket.accpet()
+        try:
+                while True:
+                        print('等待客户端')
+                        new_socket, dest_addr = ser_socket.accpet()
 
-print('父进程[%s]'%str(dest_addr))
-client = Thread(target=deal_width_client, args=(new_socket, dest_addr))
-client.start()
-finally:
-ser_socket.close()
+                        print('父进程[%s]'%str(dest_addr))
+                        client = Thread(target=deal_width_client, args=(new_socket, dest_addr))
+                        client.start()
+        finally:
+                ser_socket.close()
 
 if __name__ == '__main__':
-main()
-```
+        main()
+``` 
 
 > 单进程服务器-非堵塞模式
 
-
+ 
 ```
 #coding=utf-8
 from socket import *
@@ -1246,55 +1246,55 @@ import time
 g_socketList = []
 
 def main():
-serSocket = socket(AF_INET, SOCK_STREAM)
-serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
-localAddr = ('', 7788)
-serSocket.bind(localAddr)
-# 可以适当修改listen中的值来看看不同的现象
-serSocket.listen(1000)
-# 将套接字设置为非堵塞
-# 设置为非堵塞后，如果accept时，恰巧没有客户端connect，那么accept会
-# 产生一个异常，所以需要try来进行处理
-serSocket.setblocking(False)
+    serSocket = socket(AF_INET, SOCK_STREAM)
+    serSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR  , 1)
+    localAddr = ('', 7788)
+    serSocket.bind(localAddr)
+    # 可以适当修改listen中的值来看看不同的现象
+    serSocket.listen(1000)
+    # 将套接字设置为非堵塞
+    # 设置为非堵塞后，如果accept时，恰巧没有客户端connect，那么accept会
+    # 产生一个异常，所以需要try来进行处理
+    serSocket.setblocking(False)
 
-while True:
+    while True:
 
-try:
-newClientInfo = serSocket.accept()
-except Exception as result:
-pass
-else:
-print("一个新的客户端到来:%s"%str(newClientInfo))
-newClientInfo[0].setblocking(False)
-g_socketList.append(newClientInfo)
+        try:
+            newClientInfo = serSocket.accept()
+        except Exception as result:
+            pass
+        else:
+            print("一个新的客户端到来:%s"%str(newClientInfo))
+            newClientInfo[0].setblocking(False)
+            g_socketList.append(newClientInfo)
 
-# 用来存储需要删除的客户端信息
-needDelClientInfoList = []
+        # 用来存储需要删除的客户端信息
+        needDelClientInfoList = []
 
-for clientSocket,clientAddr in g_socketList:
-try:
-recvData = clientSocket.recv(1024)
-if len(recvData)>0:
-print('recv[%s]:%s'%(str(clientAddr), recvData))
-else:
-print('[%s]客户端已经关闭'%str(clientAddr))
-clientSocket.close()
-g_needDelClientInfoList.append((clientSocket,clientAddr))
-except Exception as result:
-pass
+        for clientSocket,clientAddr in g_socketList:
+            try:
+                recvData = clientSocket.recv(1024)
+                if len(recvData)>0:
+                    print('recv[%s]:%s'%(str(clientAddr), recvData))
+                else:
+                    print('[%s]客户端已经关闭'%str(clientAddr))
+                    clientSocket.close()
+                    g_needDelClientInfoList.append((clientSocket,clientAddr))
+            except Exception as result:
+                pass
 
-for needDelClientInfo in needDelClientInfoList:
-g_socketList.remove(needDelClientInfo)
+        for needDelClientInfo in needDelClientInfoList:
+            g_socketList.remove(needDelClientInfo)
 
 if __name__ == '__main__':
-main()
+    main()
 ```
 
 > select版服务器
 
-`select`作用: 完成`IO`的多路复用。能够完成对一些套接字的检测（所有的套接字 ）。
+`select`作用: 完成`IO`的多路复用。能够完成对一些套接字的检测（所有的套接字 ）。 
 
-多路复用：在没有开辟多进程，多线程的情况下， 能够完成并发服务器的开发。
+多路复用：在没有开辟多进程，多线程的情况下， 能够完成并发服务器的开发。 
 
 
 ```
@@ -1316,41 +1316,41 @@ import socket
 running = True
 
 def main ():
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('', 7788))
-server.listen(5)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('', 7788))
+    server.listen(5)
 
-inputs = [server]
+    inputs = [server]
 
-while True:
-readable, writeable, exceptionsal = select.select(inputs, [], [])
+    while True:
+      readable, writeable, exceptionsal = select.select(inputs, [], [])
 
-for sock in readable:
-if sock == server:
-client, addr = server.accept()
-inputs.append(client)
+      for sock in readable:
+        if sock == server:
+          client, addr = server.accept()
+          inputs.append(client)
+        
+        # 监听用户输入的键盘
+        elif sock == sys.stdin:
+          cmd = sys.stdin.readline()
+          running = False
+          break
 
-# 监听用户输入的键盘
-elif sock == sys.stdin:
-cmd = sys.stdin.readline()
-running = False
-break
+        else:
+          data = sock.recv(1024)
+          if data:
+            sock.send(data)
+          else:
+            inputs.remove(data)
+            sock.close()
 
-else:
-data = sock.recv(1024)
-if data:
-sock.send(data)
-else:
-inputs.remove(data)
-sock.close()
+      if not running:      
+        break
 
-if not running:
-break
-
-server.close()
+    server.close()    
 
 if __name__ == '__main__':
-main()
+	main()
 ```
 
 优点：
@@ -1392,53 +1392,53 @@ import socket
 import select
 
 def main():
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind(('', 1005))
-s.listen()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(('', 1005))
+    s.listen()
 
-epoll = select.epoll()
+    epoll = select.epoll()
 
-# 注册事件到epoll中
-# epoll.register(fd[, eventmask])
-# 如果fd已经注册过，则会发生异常
-# 将创建的套接字添加到epoll的事件监听中
-epoll.register(s.fileno(), select.EPOLLIN|select.EPOLLET)
+    # 注册事件到epoll中
+    # epoll.register(fd[, eventmask])
+    # 如果fd已经注册过，则会发生异常
+    # 将创建的套接字添加到epoll的事件监听中
+    epoll.register(s.fileno(), select.EPOLLIN|select.EPOLLET)
 
-connections = {}
-addresses = {}
+    connections = {}
+    addresses = {}
 
-while True:
-# epoll 进行 fd 扫描的地方 -- 未指定超时时间则为阻塞等待
-epoll_list = epoll.poll()
+    while True:
+        # epoll 进行 fd 扫描的地方 -- 未指定超时时间则为阻塞等待
+        epoll_list = epoll.poll()
 
-# 对事件进行判断
-for fd, events in epoll_list:
-if fd === s.lineno(): # 确定当前那个套接字被激活
-client, addr = s.accept()
-print('new client %s'%str(addr))
+        # 对事件进行判断
+        for fd, events in epoll_list:
+            if fd === s.lineno(): # 确定当前那个套接字被激活
+                client, addr = s.accept()
+                print('new client %s'%str(addr))
 
-# 将addr和套接字添加到字典中, fd作为当前字典的key
-connections[client.fileno()] = client
-addresses[client.fileno()] = addr
+                # 将addr和套接字添加到字典中, fd作为当前字典的key
+                connections[client.fileno()] = client
+                addresses[client.fileno()] = addr
 
-# 向 epoll中注册 连接的socket的可读事件
-epoll.register(client.fileno(), select.EPOLLIN|select.EPOLLET)
-elif events == select.EPOLLIN: # 判断事件是否是可接收数据的事件
-recvdata = connections[fd].recv(1024)
+                # 向 epoll中注册 连接的socket的可读事件
+                epoll.register(client.fileno(), select.EPOLLIN|select.EPOLLET)
+            elif events == select.EPOLLIN: # 判断事件是否是可接收数据的事件
+                recvdata = connections[fd].recv(1024)
 
-if len(recvdata) > 0:
-print('recv: %s'%recvdata)
-else:
-# 移除注册
-epoll.unregister()
-# 关闭套接字
-connections[fd].close()
+                if len(recvdata) > 0:
+                    print('recv: %s'%recvdata)
+                else:
+                    # 移除注册
+                    epoll.unregister()   
+                    # 关闭套接字
+                    connections[fd].close()
 
-print('%s---offline---'%str(addresses[fd]))
+                    print('%s---offline---'%str(addresses[fd]))
 
 if __name__ == '__main__':
-main()
+    main()
 ```
 
 参数说明(特殊标识的数字)：
@@ -1472,20 +1472,20 @@ main()
 import time
 
 def A():
-while True:
-print("----A---")
-yield
-time.sleep(0.5)
+    while True:
+        print("----A---")
+        yield
+        time.sleep(0.5)
 
 def B(c):
-while True:
-print("----B---")
-next(c)
-time.sleep(0.5)
+    while True:
+        print("----B---")
+        next(c)
+        time.sleep(0.5)
 
 if __name__=='__main__':
-a = A()
-B(a)
+    a = A()
+    B(a)
 ```
 
 > greenlet实现多任务
@@ -1499,16 +1499,16 @@ from greenlet import greenlet
 import time
 
 def test1():
-while True:
-print('---A---')
-gr2.switch()
-time.sleep(0.5)
+    while True:
+        print('---A---')
+        gr2.switch()
+        time.sleep(0.5)
 
 def test2():
-while True:
-print('---B---')
-gr1.switch()
-time.sleep(0.5)
+    while True:
+        print('---B---')
+        gr1.switch()
+        time.sleep(0.5)
 
 gr1 = greenlet(test1)
 gr2 = greenlet(test2)
@@ -1530,10 +1530,10 @@ gr1.switch()
 import gevent
 
 def f(n):
-for i in range(n):
-print gevent.getcurrent(), i
-# 用来模拟一个耗时操作，注意不是time模块中的sleep
-gevent.sleep(1)
+    for i in range(n):
+        print gevent.getcurrent(), i
+        # 用来模拟一个耗时操作，注意不是time模块中的sleep
+        gevent.sleep(1)
 
 g1 = gevent.spawn(f, 5)
 g2 = gevent.spawn(f, 5)
@@ -1543,4 +1543,218 @@ g2.join()
 g3.join()
 ```
 
-g
+## HTTP协议
+
+`HTTP`是无状态
+
+浏览器和服务器之间的传输协议是`HTTP`
+
+浏览器请求：
+```
+GET / HTTP/1.1
+Host: www.sina.com
+```
+`GET`表示一个读取请求，将从服务器获得网页数据，`/`表示URL的路径，`URL`总是以`/`开头，`/`就表示首页，最后的`HTTP/1.1`指示采用的`HTTP`协议版本是1.1。
+目前`HTTP`协议的版本就是1.1，但是大部分服务器也支持1.0版本，主要区别在于1.1版本允许多个`HTTP`请求复用一个`TCP`连接，以加快传输速度。
+
+服务器响应：
+
+`HTTP`响应分为`Header`和`Body`两部分（`Body`是可选项）
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/html
+```
+200表示一个成功的响应，后面的`OK`是说明。
+`Content-Type`指示响应的内容，这里是`text/html`表示`HTML`网页。
+
+> HTTP格式
+
+每个`HTTP`请求和响应都遵循相同的格式，一个`HTTP`包含`Header`和`Body`两部分，其中`Body`是可选的。
+
+`HTTP`协议是一种文本协议
+
+`HTTP` `GET`请求的格式：
+```
+GET /path HTTP/1.1
+Header1: Value1
+Header2: Value2
+Header3: Value3
+```
+每个`Header`一行一个，换行符是`\r\n`。
+
+`HTTP` `POST`请求的格式：
+```
+POST /path HTTP/1.1
+Header1: Value1
+Header2: Value2
+Header3: Value3
+
+body data goes here...
+```
+当遇到连续`\r\n\r\n`时，`Header`部分结束，后面的数据全部是`Body`。
+
+HTTP响应的格式：
+```
+HTTP1.1 200 OK
+Header1: Value1
+Header2: Value2
+Header3: Value3
+
+body data goes here...
+```
+`HTTP`响应如果包含`body`，也是通过`\r\n\r\n`来分隔的。
+
+显示静态文件：
+```
+#coding=utf-8
+import socket
+import re
+
+from multiprocessing import Process
+
+
+# 设置静态文件根目录
+HTML_ROOT_DIR = './html'
+
+def hand_client(cli_sock):
+    request_data = cli_sock.recv(1024)
+    print('--- requset_data %s ---'%request_data)
+    request_lines = request_data.splitlines()
+
+    for line in request_lines:
+        print(line)
+    
+    # 解析请求报文
+    # GET / HTTP/1.1
+    request_start_line = request_lines[0]
+    file_name = re.match(r'\w+\s+(/[^ ]*)', request_start_line.decode('utf-8')).group(1)
+    if '/' == file_name: # 常量写在右边，变量写在左边
+        file_name = '/index.html'
+
+    # 打开文件，读取内容
+    try:
+        file = open(HTML_ROOT_DIR + file_name, 'rb')
+    except IOError:
+        response_data_line = 'HTTP1.1 404 not found\r\n'
+        response_data_head = 'Server: alogy server\r\n'
+        response_data_body = 'the file is not found!'
+    else:            
+        file_data = file.read()
+        file.close()    
+        # 构造客户端返回数据
+        response_data_line = 'HTTP1.1 200 OK\r\n'
+        response_data_head = 'Server: alogy server\r\n'
+        response_data_body = file_data.decode('utf-8')
+
+    response = response_data_line + response_data_head + '\r\n' + response_data_body
+    print('response data:', response)
+    cli_sock.send(bytes(response, 'utf-8'))
+    cli_sock.close()
+
+def main():
+    ser_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ser_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    ser_sock.bind(('', 7329))
+    ser_sock.listen(127)
+
+    while True:
+        cli_sock, cli_address = ser_sock.accept()
+        print('[%s, %s]用户链接了'%cli_address)
+        hand_process = Process(target=hand_client, args=(cli_sock, ))
+        hand_process.start()
+        cli_sock.close()
+
+if __name__ == '__main__':
+    main()
+ 
+```
+
+文件打开方式_文本与二进制的区别:
+
+`\n` -> `linux`
+`\r\n` -> `windows`(文本识别`\r\n`, 二进制不识别`\n`)
+
+
+不需要从正向思维考虑，定义类的时候，从怎么调用开始。 
+
+使用类的方式显示静态文件
+```
+#coding=utf-8
+import socket
+import re
+
+from multiprocessing import Process
+
+
+# 设置静态文件根目录
+HTML_ROOT_DIR = './html'
+
+class HttpServer(object):
+    def __init__(self):
+        self.ser_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.ser_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def bind(self, port):
+        self.ser_sock.bind(('', port))
+
+    def start(self):
+        self.ser_sock.listen(128)
+
+        while True:
+            cli_sock, cli_address = self.ser_sock.accept()
+            print('[%s, %s]用户链接了'%cli_address)
+            hand_process = Process(target=self.hand_client, args=(cli_sock, ))
+            hand_process.start()
+            cli_sock.close()
+
+    def hand_client(self, cli_sock):
+        request_data = cli_sock.recv(1024)
+        print('--- requset_data %s ---'%request_data)
+        request_lines = request_data.splitlines()
+
+        for line in request_lines:
+            print(line)
+        
+        # 解析请求报文
+        # GET / HTTP/1.1
+        request_start_line = request_lines[0]
+        file_name = re.match(r'\w+\s+(/[^ ]*)', request_start_line.decode('utf-8')).group(1)
+        if '/' == file_name: # 常量写在右边，变量写在左边
+            file_name = '/index.html'
+
+        # 打开文件，读取内容
+        try:
+            file = open(HTML_ROOT_DIR + file_name, 'rb')
+        except IOError:
+            response_data_line = 'HTTP1.1 404 not found\r\n'
+            response_data_head = 'Server: alogy server\r\n'
+            response_data_body = 'the file is not found!'
+        else:            
+            file_data = file.read()
+            file.close()    
+            # 构造客户端返回数据
+            response_data_line = 'HTTP1.1 200 OK\r\n'
+            response_data_head = 'Server: alogy server\r\n'
+            response_data_body = file_data.decode('utf-8')
+
+        response = response_data_line + response_data_head + '\r\n' + response_data_body
+        print('response data:', response)
+        cli_sock.send(bytes(response, 'utf-8'))
+        cli_sock.close()        
+
+def main():
+    http_server = HttpServer()
+    http_server.bind(7329)
+    http_server.start()
+
+if __name__ == '__main__':
+    main()
+ 
+```
+
+> WEGI协议
+
+作用：不修改服务器和架构代码而确保可以在多个架构下运行web服务器
+
+
