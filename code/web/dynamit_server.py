@@ -44,12 +44,18 @@ class HttpServer(object):
         method = re.match(r'(\w+)\s+/[^ ]*', request_start_line.decode('utf-8')).group(1)
 
         if file_name.endswith('.py'):
-            module = __import__(file_name[1:-3])
-            env = {
-                "PATH_INFO": file_name,
-                "METHOD": method
-            }
-            response_body = module.application(env, self.start_response)
+            try:
+                module = __import__(file_name[1:-3])
+            except Exception:
+                self.response_headers = 'HTTP/1.1 404 Not Found\r\n'
+                response_body = 'not found'
+            else:
+                env = {
+                    "PATH_INFO": file_name,
+                    "METHOD": method
+                }
+                # 容错处理
+                response_body = module.application(env, self.start_response)
             response = self.response_headers + '\r\n' + response_body
         else:    
             if '/' == file_name: # 常量写在右边，变量写在左边
