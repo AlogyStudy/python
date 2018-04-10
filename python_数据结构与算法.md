@@ -77,11 +77,136 @@
 |6n3+2n2+3n+4|	O(n3)	|立方阶|
 |2n	| O(2n)|	指数阶|
 
-note: 经常将`log2n`（以2为底的对数）简写成`logn`
+Note: 经常将`log2n`（以2为底的对数）简写成`logn`
+
+![clipboard.png](/img/bV71Ql)
 
 所消耗的时间从小到大:
-`O(1) < O(logn) < O(n) < O(nlogn) < O(n2) < O(n3) < O(2n) < O(n!) < O(nn)`
+`O(1) < O(logn) < O(n) < O(nlogn) < O(n2) < O(n3) < O(2n) < O(n!) < O(n^n)`
+
+Note：函数是步骤和执行结构的综合
+
+> Python内置类型性能
+
+`timeit`模块作用：测试一小段`Python`代码代码的执行速度
+
+`class timeit.Timer(stmt='pass', setup='pass', timer=<timer function>)`
+`Timer`是测量小段代码执行速度的类。
+`stmt`参数是要测试的代码语句（`statment`）；
+`setup`参数是运行代码时需要的设置；
+`timer`参数是一个定时器函数，与平台有关。
+
+```
+#coding=utf-8
+
+from timeit import Timer
 
 
+def test1():
+    li = []
+    for i in range(10000):
+        li.append(i)
+
+def test2():
+    li = []
+    for i in range(10000):
+        li += [i]
+
+def test3():
+    li = [i for i in range(10000)]
+
+def test4():
+    li = list(range(10000))
+
+timer1 = Timer('test1()', 'from __main__ import test1')
+print('append: ',timer1.timeit(1000)) # 测算次数, 返回值测算时间
+
+timer2 = Timer('test2()', 'from __main__ import test2')
+print('+: ',timer1.timeit(1000))
+
+timer3 = Timer('test3()', 'from __main__ import test3')
+print('[]: ',timer1.timeit(1000))
+
+timer4 = Timer('test4()', 'from __main__ import test4')
+print('list: ',timer1.timeit(1000))
+```
+
+`list`内置操作的时间复杂度:
+
+![clipboard.png](/img/bV72bw)
+
+`n`: 列表长度
+`k`: 范围
+
+主要：
+```
+index[] -> O(1)
+append -> O(1)
+pop(i) -> O(n)
+insert(i, item) -> O(n)
+contains(in) -> O(n)
+```
+
+`dict`内置操作的时间复杂度:
+
+![clipboard.png](/img/bV72cJ)
 
 
+> 数据结构引入
+
+算法关注在解决问题的步骤和思想上面。
+
+什么是数据结构：数据的组织结构方式,（一组数据如何存储），基本数据类型（`int`， `float`，`char`）的封装
+
+
+算法与数据结构的区别：
+数据结构只是静态的描述了数据元素之间的关系。
+高效的程序需要在数据结构的基础上设计和选择算法。
+
+**程序 = 数据结构 + 算法**
+
+总结：算法是为了解决实际问题而设计的，数据结构是算法需要处理的问题载体
+
+最常用的数据运算有五种:
+
+- 插入
+- 删除
+- 修改
+- 查找
+- 排序
+
+
+## 顺序表
+
+> 内存
+
+32位机器：一个`int`, 占四个字节。
+
+一个字节表示一个地址单元。
+
+**变量**表示起始地址位置
+
+
+> 类型本质
+
+任何变量，函数原则上都是一块块大小各异的内存，而类型则是和系统对这块内存含义的**约定（固定内存块大小的别名）**
+
+> 连续存储
+
+顺序表的基本布局：
+
+![clipboard.png](/img/bV77TX)
+
+
+数据元素本身连续存储，每个元素所占的存储单元大小固定相同，元素的下标是其逻辑地址，而元素存储的物理地址（实际内存地址）可以通过存储区的起始地址Loc (e0)加上逻辑地址（第i个元素）与存储单元大小（c）的乘积计算而得
+
+所以： 访问指定元素时无需从头遍历，通过计算便可获得对应地址，其时间复杂度为O(1)
+
+下标：地址单元的偏移量，才会规定为从0开始。
+
+顺序表的元素外置：
+
+元素外置在内存中存储地址，地址字节是相同的（可以使用顺序表），而非变化的字节。
+
+
+![clipboard.png](/img/bV77VI)
