@@ -39,7 +39,9 @@ class SingleLinkList(object):
     def add(self, item):
         '''链表头部添加元素，头插法'''
         node = Node(item)
-        node.next = self.__head.next
+        node.next = self.__head # 保证链表中的所有关系不打断
+        self.__head = node
+
     def append(self, item):
         '''链表尾部添加元素，尾插法'''
         # item 数据元素
@@ -53,8 +55,23 @@ class SingleLinkList(object):
             cur.next = node
 
     def insert(self, pos, item):
-        '''指定位置添加元素'''
-        pass
+        '''指定位置添加元素
+            :param pos 从0开始
+        '''
+        if pos < 0:
+            self.add(item)
+        elif pos > self.length() - 1:
+            self.append(item)
+        else:
+            pre = self.__head # pre, prior
+            count = 0
+            while count < pos - 1:
+                count += 1
+                pre = pre.next
+            # 当循环退出后，pre指向pos-1的位置
+            node = Node(item)
+            node.next = pre.next
+            pre.next = node
     def remove(self, item):
         '''删除节点'''
         pass
@@ -71,7 +88,9 @@ if __name__ == '__main__':
     print('length', sll.length())
 
     sll.append(22)
+    sll.add(7)
     sll.append(20)
+    sll.insert(2, 777)
 
 
     sll.travel()
