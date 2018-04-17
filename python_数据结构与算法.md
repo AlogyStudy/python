@@ -270,7 +270,7 @@ contains(in) -> O(n)
 
 `list`实现采用了如下的策略：在建立空表（或者很小的表）时，系统分配一块能容纳8个元素的存储区；在执行插入操作（`insert`或`append`）时，如果元素存储区满就换一块4倍大的存储区。但如果此时的表已经很大（目前的阀值为`50000`），则改变策略，采用加一倍的方法。引入这种改变策略的方式，是为了避免出现过多空闲的存储位置。
 
-## 链表
+## 单链表
 
 > 为什么需要链表
 
@@ -384,6 +384,7 @@ class SingleLinkList(object):
 		elif pos > self.length() - 1:
 			self.append(item)
 		else:
+			# pre用来指向指定位置pos的前一个位置pos-1，初始从头节点开始移动到指定位置
 			pre = self.__head # pre, prior
 			count = 0
 			while count < pos - 1:
@@ -391,14 +392,38 @@ class SingleLinkList(object):
 				pre = pre.next
 			# 当循环退出后，pre指向pos-1的位置
 			node = Node(item)
+			# 先将新节点node的next指向插入位置的节点
 			node.next = pre.next
+			# 将插入位置的前一个节点的next指向新节点
 			pre.next = node
 	def remove(self, item):
 		'''删除节点'''
-		pass
+		# pre 与 cur 二个游标，需要隔开移动
+		cur = self.__head
+		pre = None
+		while cur != None:
+			if cur.elem == item:
+				# 如果第一个就是删除的节点
+				if cur == self.__head:
+				# 判断子节点是否是头节点
+					self.__head = cur.next # 将头指针指向头节点的后一个节点
+				else:
+					# 将删除位置前一个节点的next指向删除位置的后一个节点
+					pre.next = cur.next
+				break
+			else:
+				# 继续按链表后移节点
+				pre = cur
+				cur = cur.next
 	def search(self, item):
 		'''查找节点是否存在'''
-		pass
+		cur = self.__head
+		while cur != None:
+			if cur.elem == item:
+				return True
+			else:
+				cur = cur.next
+		return False
 
 if __name__ == '__main__':
 	sll = SingleLinkList()
@@ -413,12 +438,93 @@ if __name__ == '__main__':
 	sll.append(20)
 	sll.insert(2, 777)
 
-
+	sll.travel()
+	sll.remove(7)
 	sll.travel()
 
 ```
 
 `insert`示意图:
 
-
 ![clipboard.png](/img/bV8tba)
+
+`remove`示意图：
+
+![clipboard.png](/img/bV8Jlb)
+
+
+后继结点：当前节点的下一个节点
+
+
+> 单链表与顺序表的对比
+
+
+链表失去了顺序表随机读取的优点，同时链表由于增加了节点的指针域，空间开销比较大，但对存储空间的使用要相对灵活。
+
+链表与顺序表的各种操作复杂度：
+
+| 操作 	| 链表 	| 顺序表 |
+| ----- | ----- | ----- |
+| 访问元素 | O(n)	| O(1) |
+| 在头部插入/删除 |	O(1)	| O(n) |
+| 在尾部插入/删除 |	O(n)	| O(1) |
+| 在中间插入/删除 |	O(n)	| O(n) |
+
+链表不能一次性找到位置，都需要通过循环来找到该位置；而顺序表则直接找到位置。
+
+
+## 双链表
+
+![clipboard.png](/img/bV8KjW)
+
+数据包含：`数据区` + `前驱结点` + `后继结点`
+
+```
+# coding=utf-8
+# double_link_list
+
+class Node(object):
+	'''节点'''
+	def __init__(self, elem):
+		self.elem = elem
+		self.next = None
+		self.prev = None
+
+class DoubleLinkList(object):
+	"""双链表"""
+	def __init__(self, node=Node):
+		self.__head = node
+
+	def is_empty(self):
+		return self.__head is None
+
+	def length(self):
+		count = 0
+		cur = self.__head
+		while cur != None:
+			count += 1
+			cur = cur.next
+		return count
+
+	def travel(self):
+		cur = self.__head
+		while cur != None:
+			print(cur.elem, end=' ')
+			cur = cur.next
+		print('')
+
+	def add(self, item):
+		node = Node(item)
+		node.next = self.__head
+		self.__head = node
+		node.next.prev = node
+
+	def append(self, item):
+		pass
+	def insert(self, pos, item):
+		pass				
+
+if __name__ == '__main__':
+	dll = DoublueLinkList()
+
+```
