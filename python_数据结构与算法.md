@@ -492,9 +492,8 @@ class Node(object):
 
 class DoubleLinkList(object):
 	"""双链表"""
-	def __init__(self, node=Node):
+	def __init__(self, node=None):
 		self.__head = node
-
 	def is_empty(self):
 		return self.__head is None
 
@@ -505,14 +504,12 @@ class DoubleLinkList(object):
 			count += 1
 			cur = cur.next
 		return count
-
 	def travel(self):
 		cur = self.__head
 		while cur != None:
 			print(cur.elem, end=' ')
 			cur = cur.next
 		print('')
-
 	def add(self, item):
 		node = Node(item)
 		node.next = self.__head
@@ -520,11 +517,148 @@ class DoubleLinkList(object):
 		node.next.prev = node
 
 	def append(self, item):
-		pass
+		node = Node(item)
+		cur = self.__head
+
+		if self.is_empty():
+			self.__head = node
+		else:	
+			while cur.next != None:
+				cur = cur.next
+			cur.next = node
+			node.prev = cur 
+
 	def insert(self, pos, item):
-		pass				
+		if pos <= 0:
+			self.add(item)
+		elif pos > (self.length() - 1):
+			self.append(item)
+		else:
+			cur = self.__head
+			count = 0
+			while count < pos:
+				count += 1
+				cur = cur.next
+			# 当循环退出的时候，cur指针指向的就是pos的位置
+			node = Node(item)
+			# 将node的prev指向cur
+			node.next = cur
+			#  将node的next指向cur的下一个节点
+			node.prev = cur.prev # 当前节点的上一个，指向到插入节点的前指针
+			# 将cur的下一个节点的prev指向node
+			cur.prev.next = node
+			# 将cur的next指向node
+			cur.prev = node
+
+	def remove(self, item):
+		cur = self.__head
+		while cur != None:
+			if cur.elem == item:
+				if cur == self.__head:
+					self.__head = cur.next
+					if cur.next: # 判断双链表是否之后一个节点
+						cur.next.prve = None
+				else:
+					# 将cur的前一个节点的next指向cur的后一个节点
+					cur.prev.next = cur.next
+					if cur.next:
+						# 将cur的后一个节点的prev指向cur的前一个节点
+						cur.next.prev = cur.prev
+				break
+			else:
+				cur = cur.next
+
+	def search(self, item):
+		cur = self.__head
+		while cur != None:
+			if cur.elem == item:
+				return True
+			else:
+				cur = cur.next
+		return False
 
 if __name__ == '__main__':
-	dll = DoublueLinkList()
+	dll = DoubleLinkList()
+
+	print('is_empty', dll.is_empty())
+	print('length', dll.length())
+	dll.append(100)
+	print('is_empty', dll.is_empty())
+	print('length', dll.length())
+
+	dll.append(22)
+	dll.add(7)
+	dll.append(20)
+	dll.insert(2, 777)
+
+	dll.travel()
+	dll.remove(7)
+	dll.travel()
+```
+
+## 单项循环链表
+
+![clipboard.png](/img/bV8PKX)
+
+```
+# coding=utf-8
+# single_cycle_link_list
+
+class Node(object):
+    '''节点'''
+    def __init__(self, elem):
+        self.elem = elem
+        self.next = None
+        self.next = 
+
+class SingleCycleLinkList(object):
+    '''单链表'''
+    def __init__(self, node=None):
+        self.__head = node # 头节点
+        if node:
+            node.next = node
+
+    def is_empty(self):
+        '''链表是否为空'''
+        return self.__head == None
+
+    def length(self):
+        '''链表长度'''
+        if self.is_empty():
+            return 0
+        cur = self.__head
+        # count记录数量
+        count = 1
+        while cur.next != self.__head: # cur.next == None
+            count += 1
+            cur = cur.next
+        return count
+
+    def travel(self):
+        '''遍历整个链表'''
+        pass
+
+    def add(self, item):
+        '''链表头部添加元素，头插法'''
+        pass
+
+    def append(self, item):
+        '''链表尾部添加元素，尾插法'''
+        pass
+
+    def insert(self, pos, item):
+        '''指定位置添加元素
+            :param pos 从0开始
+        '''
+        pass
+    def remove(self, item):
+        '''删除节点'''
+        pass
+    def search(self, item):
+        '''查找节点是否存在'''
+        pass
+
+if __name__ == '__main__':
+    scll = SingleCycleLinkList()
 
 ```
