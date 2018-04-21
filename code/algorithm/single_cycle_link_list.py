@@ -3,10 +3,9 @@
 
 class Node(object):
     '''节点'''
-    def __init__(self, node=None):
-        self.__head = node
-        if node:
-            node.next = node # 指针指向当前列表的头部
+    def __init__(self, node):
+        self.elem = node
+        self.next = None
 
 class SingleCycleLinkList(object):
     '''单链表'''
@@ -37,10 +36,10 @@ class SingleCycleLinkList(object):
             return
         cur = self.__head
         while cur.next != self.__head:
-            print(cur.elem)
             cur = cur.next
-        print(cur.elem)
-        print('')
+            print(cur.elem, end=' ')
+        # print(cur.elem, '-------')
+        # print('')
 
     def add(self, item):
         '''链表头部添加元素，头插法'''
@@ -94,10 +93,75 @@ class SingleCycleLinkList(object):
 
     def remove(self, item):
         '''删除节点'''
-        pass
+        '''
+            1. 头节点
+            2. 尾节点
+            3. 中间节点
+            4. 只存在一个节点
+            5. 空链表
+            6. 首节点就是删除的节点
+        '''
+        if self.is_empty():
+            return
+        cur = self.__head
+        pre = None
+        while cur.next != self.__head:
+            if cur.elem == item:
+                if cur == self.__head:
+                    # 头节点的情况
+                    # 找到尾节点
+                    rear = self.__head
+                    # 为了顺利把尾节点的指针指向到头节点，先把指针便利到尾部
+                    while rear.next != self.__head:
+                        rear = rear.next
+                    self.__head = cur.next
+                    rear.next = self.__head
+                else:
+                    # 中间节点
+                    pre.next = cur.next
+                return
+            else:
+                # 两个游标顺次往链表后边移动
+                pre = cur
+                cur = cur.next
+        # 尾部情况
+        # 退出循环，cur指向尾节点
+        if cur.elem == item:
+            if self.__head == cur:
+                # 只有一个节点
+                self.__head = None
+            else:
+                pre.next = cur.next
+
     def search(self, item):
         '''查找节点是否存在'''
-        pass
+        if self.is_empty():
+            return False
+        cur = self.__head
+        while cur.next != self.__head:
+            if cur.elem == item:
+                return True
+            else:
+                cur = cur.next
+        # 退出循环，cur指向尾节点        
+        if cur.elem == item:
+            return True
+        return False
 
 if __name__ == '__main__':
     scll = SingleCycleLinkList()
+    print('is_empty', scll.is_empty())
+    print('length', scll.length())
+
+    scll.append(100)
+    print('is_empty', scll.is_empty())
+    print('length', scll.length())
+
+    scll.append(22)
+    scll.add(7)
+    scll.append(20)
+    scll.insert(2, 777)
+
+    scll.travel()
+    scll.remove(7)
+    scll.travel()
