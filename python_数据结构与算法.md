@@ -598,7 +598,8 @@ if __name__ == '__main__':
 
 ## 单项循环链表
 
-![clipboard.png](/img/bV8PKX)
+
+![clipboard.png](/img/bV8SpU)
 
 ```
 # coding=utf-8
@@ -606,10 +607,9 @@ if __name__ == '__main__':
 
 class Node(object):
     '''节点'''
-    def __init__(self, elem):
-        self.elem = elem
+    def __init__(self, node):
+        self.elem = node
         self.next = None
-        self.next = 
 
 class SingleCycleLinkList(object):
     '''单链表'''
@@ -628,7 +628,7 @@ class SingleCycleLinkList(object):
             return 0
         cur = self.__head
         # count记录数量
-        count = 1
+        count = 1 # count从1开始
         while cur.next != self.__head: # cur.next == None
             count += 1
             cur = cur.next
@@ -636,29 +636,308 @@ class SingleCycleLinkList(object):
 
     def travel(self):
         '''遍历整个链表'''
-        pass
+        if self.is_empty():
+            return
+        cur = self.__head
+        while cur.next != self.__head:
+            cur = cur.next
+            print(cur.elem, end=' ')
+        # print(cur.elem, '-------')
+        # print('')
 
     def add(self, item):
         '''链表头部添加元素，头插法'''
-        pass
+        node = Node(item)
+        if self.is_empty():
+            # 如果为空，指向节点，然后节点的指针指向自己
+            self.__head = node
+            node.next = node
+        else:
+            cur = self.__head
+            # 指针先移动到尾端
+            while cur.next != self.__head:
+                cur = cur.next
+            # 退出循环，cur指向尾节点
+            # 改变指针指向
+            node.next = self.__head
+            self.__head = node
+            # cur.next = node
+            cur.next = node
 
     def append(self, item):
         '''链表尾部添加元素，尾插法'''
-        pass
+        node = Node(item)
+        if self.is_empty():
+            self.__head = node
+            node.next = node
+        else:
+            cur = self.__head
+            while cur.next != self.__head:
+                cur = cur.next
+            node.next = self.__head
+            cur.next = node
 
     def insert(self, pos, item):
         '''指定位置添加元素
             :param pos 从0开始
         '''
-        pass
+        if pos < 0:
+            self.add(item)
+        elif pos > (self.length() - 1):
+            self.append(item)
+        else:
+            pre = self.__head
+            count = 0
+            while count < (pos - 1):
+                count += 1
+                pre = pre.next
+            node = Node(item)
+            node.next = pre.next
+            pre.next = node
+
     def remove(self, item):
         '''删除节点'''
-        pass
+        '''
+            1. 头节点
+            2. 尾节点
+            3. 中间节点
+            4. 只存在一个节点
+            5. 空链表
+            6. 首节点就是删除的节点
+        '''
+        if self.is_empty():
+            return
+        cur = self.__head
+        pre = None
+        while cur.next != self.__head:
+            if cur.elem == item:
+                if cur == self.__head:
+                    # 头节点的情况
+                    # 找到尾节点
+                    rear = self.__head
+                    # 为了顺利把尾节点的指针指向到头节点，先把指针便利到尾部
+                    while rear.next != self.__head:
+                        rear = rear.next
+                    self.__head = cur.next
+                    rear.next = self.__head
+                else:
+                    # 中间节点
+                    pre.next = cur.next
+                return
+            else:
+                # 两个游标顺次往链表后边移动
+                pre = cur
+                cur = cur.next
+        # 尾部情况
+        # 退出循环，cur指向尾节点
+        if cur.elem == item:
+            if self.__head == cur:
+                # 只有一个节点
+                self.__head = None
+            else:
+                pre.next = cur.next
+
     def search(self, item):
         '''查找节点是否存在'''
-        pass
+        if self.is_empty():
+            return False
+        cur = self.__head
+        while cur.next != self.__head:
+            if cur.elem == item:
+                return True
+            else:
+                cur = cur.next
+        # 退出循环，cur指向尾节点        
+        if cur.elem == item:
+            return True
+        return False
 
 if __name__ == '__main__':
     scll = SingleCycleLinkList()
+    print('is_empty', scll.is_empty())
+    print('length', scll.length())
+
+    scll.append(100)
+    print('is_empty', scll.is_empty())
+    print('length', scll.length())
+
+    scll.append(22)
+    scll.add(7)
+    scll.append(20)
+    scll.insert(2, 777)
+
+    scll.travel()
+    scll.remove(7)
+    scll.travel()
 
 ```
+
+## 栈
+
+线性表：`顺序表（连续存放）`，`链表（离散存放）`。存储线性的数据。 --> **解决数据怎么存放**的问题
+
+> 栈与队列基础
+
+栈：容器，可以利用线性表的特性，来实现数据的操作。
+
+由于栈数据结构**只允许在一端**进行操作，因而按照后进先出`（LIFO, Last In First Out）`的原理运作。
+
+![clipboard.png](/img/bV9atQ)
+
+
+> 栈的实现
+
+在`python`的`list`是顺序表，借助`list`来实现栈.
+
+栈顶：栈的头部
+栈低：栈的底部
+
+```
+#coding=utf-8
+
+
+class Stack(object):
+    '''栈'''
+    def __init__(self):
+        self.__list = []
+
+    def push(self, item):
+        '''添加一个新的元素item到栈顶'''
+        self.__list.append(item)
+        # 确定是尾部还是头部插入数据
+        # 选择在尾部添加，而非头部插入，顺序表对于尾部操作的时间复杂度是O(1)
+        # self.__list.insert(0, item)
+    def pop(self):
+        '''弹出栈顶元素'''
+        return self.__list.pop()
+        # self.__list.pop(0)
+
+    def size(self):
+        '''返回栈的元素个数'''
+        return len(self.__list)
+
+    def is_empty(self):
+        '''判断栈是否为空'''
+        # '', 0, {}, [], ()
+        return self.__list == []
+
+    def peek(self):
+        '''返回栈顶元素'''
+        if self.__list:
+            return self.__list[-1]
+        else:
+            return None
+
+if __name__ == '__main__':
+    stack = Stack()
+
+    stack.push(11)
+    stack.push(1000)
+    print(stack.size(), 'stack.size()')
+    print(stack.pop(), 'stack.pop()')
+
+```
+
+## 队列
+
+队列（queue）是**只允许在一端进行插入操作，而在另一端进行删除操作**的线性表。
+队列不允许在中间部位进行操作。
+
+可以在`tree`中使用.
+
+> 队列
+
+队列头：取的那一端，叫做队头
+队列尾：添加队一端，叫做队尾
+
+队列
+```
+#coding=utf-8
+
+
+class Queue(object):
+    def __init__(self):
+        self.__list = []
+
+    def enqueue(self, item):
+        '''往队列中添加一个item元素'''
+        self.__list.append(item) # 尾部插入
+        # self.__list.insert(0, item) # 头部插入
+
+    def dequeue(self):
+        '''从队列头部删除一个元素'''
+        return self.__list.pop(0) # 尾部删除
+        # return self.__list.pop() # 头部删除
+
+    def is_empty(self):
+        '''判断一个队列是否为空'''
+        return not self.__list
+
+    def size(self):
+        '''返回队列的大小'''
+        return len(self.__list)
+
+if __name__ == '__main__':
+
+    queue = Queue()
+    queue.enqueue(10)
+    queue.enqueue(13)
+
+    print(queue.size())
+    print(queue.dequeue())
+
+```
+
+> 双端队列
+
+两端都可以出队列，也都可以入队列。
+
+```
+#coding=utf-8
+
+class Dqueue(object):
+    '''双端队列'''
+    def __init__(self):
+        self.__list = []
+
+    def add_front(self, item):
+        '''添加一个新的元素item到栈顶'''
+        self.__list.insert(0, item) # 头部添加
+
+    def add_rear(self, item):
+        self.__list.append(item) # 尾部添加
+
+    def pop_fornt(self):
+        return self.__list.pop(0)
+    
+    def pop_rear(self):
+        return self.__list.pop()
+
+    def size(self):
+        '''返回栈的元素个数'''
+        return len(self.__list)
+
+    def is_empty(self):
+        '''判断栈是否为空'''
+        # '', 0, {}, [], ()
+        return self.__list == []
+
+if __name__ == '__main__':
+    dq = Dqueue()
+
+    dq.add_front(11)
+    dq.add_front(100)
+    dq.add_rear(1000)
+    print(dq.size(), 'dq.size()')
+    print(dq.pop_fornt(), 'dq.pop_fornt()')
+
+```
+
+## 排序
+
+排序算法：是一种能将一串数据依照特定顺序进行排列的一种算法。
+
+> 排序算法的稳定性
+
+稳定排序算法会让原本有相等键值的记录维持相对次序。也就是如果一个排序算法是稳定的，当有两个相等键值的纪录R和S，且在原本的列表中R出现在S之前，在排序过的列表中R也将会是在S之前。
+
