@@ -7,12 +7,15 @@ def bubble_sort(alist):
     # 走多少次
     # 从头走到尾
 
-    for j in range(n - 1):
-        for i in range(0, n - 1 - j):
+    for j in range(n - 1):# 走多少次
+        count = 0
+        for i in range(0, n - 1 - j): # 从头走到尾
             if alist[i] > alist[i+1]:
                 # 位置调换
                 alist[i], alist[i+1] = alist[i+1], alist[i]
-
+                count += 1
+        if 0 == count: # 常量 ，变量
+            return
 
     # i 0 ~ n-2  range(0, n-1) j=0
     # i 1 ~ n-3  range(0, n-1-1) j=1
