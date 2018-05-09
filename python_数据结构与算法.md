@@ -1137,8 +1137,220 @@ print(alist)
 > 快速排序
 
 
+一个数字，在序列的那个位置。按照当前的数字，每次分开两部分。
+
+步骤：
+1. 从数列中挑出一个元素，称为"基准"（`pivot`），
+2. 重新排序数列，所有元素比基准值小的摆放在基准前面，所有元素比基准值大的摆在基准的后面（相同的数可以到任一边）。在这个分区结束之后，该基准就处于数列的中间位置。这个称为分区（`partition`）操作。
+3. 递归地（`recursive`）把小于基准值元素的子数列和大于基准值元素的子数列排序。
+
 ![clipboard.png](/img/bV9RqV)
 
+核心代码:
+取第一个位置保存中间值(`middle_value`), 第一个位置是空位置，就该`high`的位置来判断了，当合适就换位置，并且移动对方的指针（`low`），当不合适移动当前指针(`high`)。
+```
+middle_value = 10
+
+low = 0
+high = len(list)
+
+if alist[high] < middle_value:
+    alist[low] = alist[high]
+    low += 1
+elif alist[high] > middle_value:
+    high -= 1
+    
+if alist[low] < middle_value:
+    alist[high] = alist[low]
+    hight -= 1
+elif alist[low] > middle_value:
+    low += 1
+    
+if low == high:    
+    alist[low] = middle_value            
+```
+
+-----
+
+```
+#conding=utf-8
+
+def quick_sort(alist, first, last):
+    '''快速排序'''
+    if first >= last:
+        return
+
+    # mid_value = alist[0] # 中间值
+    mid_value = alist[first] # 中间值
+    # n = len(alist)
+    # 左右游标
+    # low = 0
+    low = first
+    # high = n-1
+    high = last
+
+    while low < high:
+        # high 游标 左移动
+        while low < high and alist[high] >= mid_value:
+            high -= 1
+        alist[low] = alist[high]
+        # low += 1
+
+        # low 游标 右移动
+        while low < high and alist[low] < mid_value:
+            low += 1
+        alist[high] = alist[low]
+        # high -= 1
+
+        # 等于的情况放到其中一边去处理
+        # 为了保证二个指针不错过，注释 【low += 1】和 【high -= 1】
+
+    # 退出循环的时候，low == high
+    alist[low] = mid_value # 中间值赋值到该位置
+
+    # 递归
+    # 对low左边的列表执行快速排序
+    quick_sort(alist, first, low-1)
+    # 对low右边的列表执行快速排序
+    quick_sort(alist, low+1, last)
+
+if __name__ == '__main__':
+    li = [54, 26, 93, 17, 77, 34]
+    print(li)
+    quick_sort(li, 0, len(li)-1)
+    print(li)
+
+```
+
+时间复杂度：
+- 最优时间复杂度：`O(nlogn)`: `2*2*2... = n`, n个元素对2取对数。 `log2(n)`以2为底的对数
+- 最坏时间复杂度：`O(n2)`
+- 稳定性：不稳定
+
+时间复杂度不好从代码中分析，通过画图中理解每次循环中操作。**横向**和**纵向**来区分判断。 
 
 
+> 归并排序
+
+![clipboard.png](/img/bV99VD)
+
+先把序列从头开始往下拆，直到只有一个元素。紧接着开始，二个部分合并到一起，然后再次合并，直到完成序列合并。
+
+需要使用到递归。
+
+```
+#coding=utf-8
+
+def merge_sort(alist):
+  '''归并排序'''
+
+  '''
+    分裂
+  '''
+  n = len(alist)
+  if n <= 1:
+    return alist
+  mid = n // 2
+  # left, right 采用归并排序后形成的有序的新的列表
+  left_li = merge_sort(alist[:mid]) # 传新的列表
+  right_li = merge_sort(alist[mid:])
+
+  '''
+    合并
+  '''
+  # 将两个有序的子序列合并为一个新的整体
+  # merge(left, right)
+  left_pointer, right_pointer = 0, 0
+  result = []
+
+  while left_pointer < len(left_li) and right_pointer < len(right_li):
+    if left_li[left_pointer] < right_li[right_pointer]: # 左边
+      result.append(left_li[left_pointer])
+      left_pointer += 1
+    else: # 右边
+      result.append(right_li[right_pointer])
+      right_pointer += 1
+  result += left_li[left_pointer:] # 加上剩下数据
+  result += right_li[right_pointer:]
+  return result
+
+alist = [1, 23, 34, 6,2, 12, 12, 1, 2]
+print(alist)
+new_alist = merge_sort(alist) # 返回新的列表
+print(new_alist)
+```
+
+时间复杂度：
+- 最优时间复杂度：`O(nlogn)`, `2*2*2... = n`, n个元素对2取对数。 `log2(n)`以2为底的对数
+- 最坏时间复杂度：`O(nlogn)`
+- 稳定性：稳定
+
+
+## 搜索
+
+搜索：在一个项目集合中找到特定项目的算法过程。
+搜索结果：通常的答案是`真`或`假`,因为该项目是否存在。
+
+常见搜索方法：顺序查找，二分法查找，二叉树查找，哈希查找
+
+> 二分查找
+
+二分查找，需要定位到索引，也就是说，只能作用到**顺序表**上，而且是排序过后的，有序顺序表中。
+
+**非递归实现**
+需要关注：头和尾的下标，来计算二分位置的下标。（原因在原有的列表上去找）
+指明查找的**范围**，需要二个指针来控制前后移动
+```
+def binary_search_2(alist, item):
+  '''二分查找'''
+  n = len(alist)
+  first = 0
+  last = n - 1
+  while first <= last: # 中间最小之后一个值，需要包含等于
+    mid = (first + last) // 2
+    if alist[mid] == item:
+      return True
+    elif item < alist[mid]:
+      last = mid - 1
+    else:
+      first = mid + 1
+  return False
+```
+
+
+**递归实现**
+```
+def binary_search(alist, item):
+  '''二分查找'''
+  n = len(alist)
+  if n > 0:
+    mid = n//2 # 新的列表
+
+    if alist[mid] == item:
+      return True
+    elif item < alist[mid]:
+      return binary_search(alist[:mid], item)
+    else:
+      return binary_search(alist[mid+1:], item)
+  return False
+```
+
+时间复杂度：
+
+- 最优时间复杂度：`O(1)`
+- 最坏时间复杂度：`O(logn)`
+
+
+## 二叉树
+
+用来模拟具有树状结构性质的**数据集合**，它是由`n(n>=1)`个有限节点组成一个具有层次关系的集合。
+
+二叉树是二维空间上的表现，图是三维空间上的表现。
+
+特点：
+
+- 每个节点有零个或多个子节点（每个节点都会有数据区和链接区）
+- 没有父节点的节点称为根节点
+- **每一个非根节点有且只有一个父节点**
+- 除了根节点外，每个子节点可以分为多个不相交的子树
 
