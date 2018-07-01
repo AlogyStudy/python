@@ -36,7 +36,7 @@ def getLoginZhihu():
     # 登录 获取cookie
     res = sess.post('https://www.zhihu.com/login/email', data=data, headers=headers).text
 
-    res = sess.get('https://www.zhihu.com/people/', headers)
+    res = sess.get('https://www.zhihu.com/people/', headers=headers)
 
 if __name__ == '__main__':
     getLoginZhihu()
