@@ -11,8 +11,8 @@ driver = webdriver.PhantomJS(executable_path='/Users/linxingzhang/Library/Python
 driver.get('https://www.douban.com')
 
 # 输入账号密码
-driver.find_element_by_name('form_email').send_keys('xingzhanglin@gami.com')
-driver.find_element_by_name('from_passworld').send_keys('01050310ling')
+driver.find_element_by_name('form_email').send_keys('xingzhanglin@gmial.com')
+driver.find_element_by_name('from_passworld').send_keys('---')
 
 # 模拟点击
 driver.find_element_by_xpath('//input[@class="bn-submit"]').click()
