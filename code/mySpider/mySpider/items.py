@@ -8,7 +8,7 @@
 import scrapy
 
 
-class ItItems(scrapy.Item):
+class SueItems(scrapy.Item):
     name = scrapy.Field()
     title = scrapy.Field()
     info = scrapy.Field()

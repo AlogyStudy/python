@@ -1,11 +1,11 @@
 #coding=utf-8
 
 import scrapy
-from mySpider.items import ItItems
+from mySpider.items import SueItems
 
 class TeSpider(scrapy.Spider):
     # 爬虫名字
-    name = 'ing'
+    name = 'sue'
     # 允许爬虫作用的范围 固定属性名allowed_domains
     allowed_domains = ['http://www.itcast.cn/']
     # 爬虫起始的url 固定属性名start_urls
@@ -19,7 +19,7 @@ class TeSpider(scrapy.Spider):
 
         itemTeachs = []
         for item in tearcherList:
-            itemTeach = ItItems()
+            itemTeach = SueItems()
             # name
             name = item.xpath('./h3/text()').extract()
             # title
