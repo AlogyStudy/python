@@ -21,6 +21,6 @@ class DouyummSpider(scrapy.Spider):
             item['nickname'] = each['nickname']
             item['imagelink'] = each['vertical_src']
 
-            yield item
+            yield item # 数据
         self.offset += 20
-        yield scrapy.Request(self.url + str(self.offset), callback=self.parse)
+        yield scrapy.Request(self.url + str(self.offset), callback=self.parse) # 再次请求
