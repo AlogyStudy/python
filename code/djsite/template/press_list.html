@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <table>
+        <tr>
+            <td>序号</td>
+            <td>id</td>
+            <td>name</td>
+            <td>功能</td>
+        </tr>
+        {%for item in press_list%}
+        <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{item.id}}</td>
+            <td>{{item.name}}</td>
+            <td>
+                <a href="/del_press/?id={{item.id}}">删除</a>
+                <a href="/edit_press/?id={{item.id}}">编辑</a>
+            </td>
+        </tr>
+        {%endfor%}
+    </table>
+</body>
+</html>

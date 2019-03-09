@@ -18,10 +18,9 @@ class DoubantopSpider(scrapy.Spider):
             item['moveStar'] = m.xpath('.//div[@class="star"]/span[@class="rating_num"]').extract()[0]
             item['moveQuote'] = m.xpath('.//p[@class="quote"]/span/text()').extract()[0]
             yield item
-        print(item)
-        assert '------------'
         
-        # self.offset += 20
-        # if self.offset > (250 - self.offset - 20):
-        #     self.offset = 250
-        # yield scrapy.Request(self.url + str(self.offset), callback=self.parse)
+        
+        self.offset += 20
+        if self.offset > (250 - self.offset - 20):
+            self.offset = 250
+        yield scrapy.Request(self.url + str(self.offset), callback=self.parse)

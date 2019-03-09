@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    
+    <table>
+        <tr>
+            <th>序号</th>
+            <th>作者id</th>
+            <th>作者名字</th>
+            <th>作者作品</th>
+        </tr>
+        {% for author in author_data %}
+        <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{author.id}}</td>
+            <td>{{author.name}}</td>
+            <td>
+            {% for book in data.books.all %}
+                {% if forloop.last %}
+                    《{{book.title}}》
+                {% else %}
+                    《{{book.title}}》,
+                {% endif %}
+            {% empty %}
+                暂无作品
+            {% enfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</body>
+</html>

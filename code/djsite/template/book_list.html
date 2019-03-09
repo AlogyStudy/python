@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <table>
+        <tr>
+            <td>序号</td>
+            <td>书Id</td>
+            <td>书名</td>
+            <td>出版社名字</td>
+        </tr>
+        {% for item in data %}
+        <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{item.id}}</td>
+            <td>{{item.title}}</td>
+            <td>{{item.press.name}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
